@@ -1,0 +1,4 @@
+- insert:
+    - id: status-lamp
+      name: 'dsh-status-lamp'
+      config: {}

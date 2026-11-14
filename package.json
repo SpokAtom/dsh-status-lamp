@@ -1,0 +1,59 @@
+{
+  "name": "dsh-status-lamp",
+  "version": "1.0.0",
+  "description": "Session-row status lamp for DeepSeek Harness: blue idle, hollow parked (manual or 5 days quiet), solid archived.",
+  "license": "MIT",
+  "author": "SpokAtom",
+  "type": "module",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek",
+    "deepseek-harness",
+    "harness",
+    "status",
+    "status-lamp",
+    "session",
+    "sidebar",
+    "ui"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SpokAtom/dsh-status-lamp.git"
+  },
+  "engines": {
+    "dsh": ">=0.2.2-rc.1"
+  },
+  "homepage": "https://github.com/SpokAtom/dsh-status-lamp#readme",
+  "bugs": {
+    "url": "https://github.com/SpokAtom/dsh-status-lamp/issues"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "DESIGN.md",
+    "CHANGELOG.md",
+    "docs/"
+  ],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-workspace",
+        "@deepseek-ai/dsh-client-ui-session",
+        "@deepseek-ai/dsh-client-ui-context-menu"
+      ]
+    }
+  }
+}

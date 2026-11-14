@@ -1,0 +1,38 @@
+{
+  "format": 1,
+  "title": {
+    "en": "SpokAtom's DSH plugins",
+    "zh": "SpokAtom 的 DSH 插件"
+  },
+  "description": {
+    "en": "Small UI additions for DeepSeek Harness.",
+    "zh": "DeepSeek Harness 的小型界面增强。"
+  },
+  "plugins": [
+    {
+      "name": "dsh-status-lamp",
+      "title": {
+        "en": "Status lamp",
+        "zh": "状态灯"
+      },
+      "description": {
+        "en": "Session-row status lamp: blue idle, hollow parked (manual or 5 days quiet), solid archived.",
+        "zh": "会话行状态灯：空闲蓝点、挂起灰空心（手动或 5 天无对话）、归档灰实心。"
+      },
+      "icon": "icons/status-lamp.svg",
+      "author": "SpokAtom",
+      "homepage": "https://github.com/SpokAtom/dsh-status-lamp#readme",
+      "repository": {
+        "url": "https://github.com/SpokAtom/dsh-status-lamp"
+      },
+      "versions": [
+        {
+          "version": "1.0.0",
+          "publishTimestamp": 1794525000,
+          "source": { "type": "npm" },
+          "engines": { "dsh": ">=0.2.2-rc.1" }
+        }
+      ]
+    }
+  ]
+}
