@@ -446,16 +446,68 @@ window.__ModuleLoader__.load({
         return node;
       };
 
-      /** Insert the filter row above the first shipped option, once per open. */
+      /** True while the rect is on screen; a menu sliding out of view fails this. */
+      const onScreen = (rect) =>
+        rect.width > 0 &&
+        rect.height > 0 &&
+        rect.right > 0 &&
+        rect.bottom > 0 &&
+        rect.left < (window.innerWidth || document.documentElement.clientWidth) &&
+        rect.top < (window.innerHeight || document.documentElement.clientHeight);
+
+      /**
+       * Insert the filter row as the first row of the visible menu's last section
+       * (筛选会话). Section labels are the `role="presentation"` rows carrying a
+       * `*label*` class; the filter section is the bottom-most visible one. The
+       * menu's own wrapper class is not used to locate the list, because a closing
+       * menu keeps an off-screen copy of the same class.
+       */
       const ensureFilterItem = () => {
-        const menu = document.querySelector(FILTER_MENU_SELECTOR);
-        if (menu === null) return;
-        if (menu.querySelector('[' + FILTER_ITEM_ATTR + ']') !== null) return;
-        const anchor = menu.querySelector('button[role="menuitem"]');
-        if (anchor === null) return;
-        const parent = anchor.parentNode;
+        const labels = [...document.querySelectorAll('[role="presentation"]')].filter(
+          (element) =>
+            /label/i.test(String(element.className)) && onScreen(element.getBoundingClientRect()),
+        );
+        let section = null;
+        let lowest = -Infinity;
+        for (const label of labels) {
+          const parent = label.parentElement;
+          if (parent === null) continue;
+          const hasVisibleItem = [...parent.querySelectorAll('button[role="menuitem"]')].some((button) =>
+            onScreen(button.getBoundingClientRect()),
+          );
+          if (!hasVisibleItem) continue;
+          const top = label.getBoundingClientRect().top;
+          if (top > lowest) {
+            lowest = top;
+            section = label;
+          }
+        }
+        if (section === null) return;
+        const parent = section.parentElement;
         if (parent === null) return;
-        parent.insertBefore(buildFilterItem(anchor), anchor);
+        if (parent.querySelector('[' + FILTER_ITEM_ATTR + ']') !== null) return;
+        const anchor = parent.querySelector('button[role="menuitem"]');
+        if (anchor === null) return;
+        section.after(buildFilterItem(anchor));
+      };
+
+      /**
+       * Insert once the menu is positioned: a menu that just mounted still sits at
+       * its pre-layout position, so retry briefly until the row lands.
+       */
+      let retryTimer = null;
+      const ensureWithRetry = (attempt = 0) => {
+        if (retryTimer !== null) {
+          window.clearTimeout(retryTimer);
+          retryTimer = null;
+        }
+        ensureFilterItem();
+        const placed = [...document.querySelectorAll('[' + FILTER_ITEM_ATTR + ']')].some((node) =>
+          onScreen(node.getBoundingClientRect()),
+        );
+        if (placed) return;
+        if (attempt >= 8) return;
+        retryTimer = window.setTimeout(() => ensureWithRetry(attempt + 1), 80);
       };
 
       const menuObserver = new MutationObserver((records) => {
@@ -463,7 +515,7 @@ window.__ModuleLoader__.load({
           for (const added of record.addedNodes) {
             if (added.nodeType !== 1 || !(added instanceof Element)) continue;
             if (added.matches(FILTER_MENU_SELECTOR) || added.querySelector(FILTER_MENU_SELECTOR) !== null) {
-              ensureFilterItem();
+              ensureWithRetry();
               return;
             }
           }
@@ -488,9 +540,10 @@ window.__ModuleLoader__.load({
 
       ctx.effect(() => {
         menuObserver.observe(document.body, { childList: true, subtree: true });
-        ensureFilterItem();
+        ensureWithRetry();
         return () => {
           menuObserver.disconnect();
+          if (retryTimer !== null) window.clearTimeout(retryTimer);
           for (const node of document.querySelectorAll('[' + FILTER_ITEM_ATTR + ']')) node.remove();
         };
       }, 'status-lamp: filter menu row');
