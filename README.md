@@ -42,10 +42,11 @@ DSH 原生只用四种状态表达会话（待审批 / 进行中 / 有新结果 
 dsh plugin --profile desktop add dsh-status-lamp
 ```
 
-**方式二：GitHub，锁到具体版本**
+**方式二：GitHub（建议锁到具体 commit 再用于生产）**
 
 ```sh
-dsh plugin --profile desktop add github:SpokAtom/dsh-status-lamp#v1.1.1
+dsh plugin --profile desktop add github:SpokAtom/dsh-status-lamp
+# 锁定版本：dsh plugin --profile desktop add github:SpokAtom/dsh-status-lamp#<commit>
 ```
 
 **方式三：本地目录（开发用）**
@@ -170,7 +171,7 @@ plugin_manager: remove_bundle dsh-status-lamp → install_bundle "D:\dsh space\p
 
 A session-row status lamp for DeepSeek Harness: a blue dot for idle, a hollow grey ring for parked (marked manually, or automatic after 5 days without conversation), and a solid grey dot for archived rows. A "hide archived and parked" toggle is added as the first item of the **Filter sessions** section in the view-options menu. Native pending / running / unread lamps are untouched.
 
-Install: `dsh plugin --profile desktop add dsh-status-lamp` (or `github:SpokAtom/dsh-status-lamp#v1.1.1`). Restart the app. Right-click a session row to park/unpark it; open the view-options (sliders) menu and tick **Hide archived and parked** to filter the list. Marks live in `localStorage`; nothing is sent over the network.
+Install: `dsh plugin --profile desktop add dsh-status-lamp` (or `github:SpokAtom/dsh-status-lamp`). Restart the app. Right-click a session row to park/unpark it; open the view-options (sliders) menu and tick **Hide archived and parked** to filter the list. Marks live in `localStorage`; nothing is sent over the network.
 
 ## License
 
