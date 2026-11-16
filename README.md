@@ -1,177 +1,173 @@
-# 状态灯 · dsh-status-lamp
+# Status lamp · dsh-status-lamp
 
-给 DeepSeek Harness 的侧栏会话行补一盏**状态灯**：空闲蓝点、挂起灰空心、归档灰实心，并支持在「视图选项」里一键隐藏归档与挂起的会话。待审批、进行中、有新结果继续用 DSH 原生灯，插件不接管。
+A status lamp for the session rows in the DeepSeek Harness sidebar: a blue dot for idle, a hollow grey ring for parked, a solid grey dot for archived — plus a one-click **Hide archived and parked** toggle in the view options menu. Pending, running and unread lamps stay exactly as DSH ships them.
 
-![三种灯](docs/legend.png)
+English | [简体中文](README.zh-CN.md)
 
-## 为什么需要它
+![The three lamps](docs/legend.png)
 
-DSH 原生只用四种状态表达会话（待审批 / 进行中 / 有新结果 / 空闲），其中：
+## Why it exists
 
-- **空闲**：行首什么都不画
-- **归档**：行首整格留空（看起来和空闲一样）
+DSH's own lamp expresses only four states (pending interaction, running, unread completion, idle), and two of the states it cannot express are the ones that matter for a long sidebar:
 
-于是「空闲、挂起、归档」在列表里长得一样——长尾会话淹没在列表里，也没法一眼看出哪些该收起来了。这个插件把 DeskMate 九态灯里的三分法搬了过来，并让 **5 天没对话的会话自动挂起**。
+- **Idle**: nothing is drawn in the leading cell.
+- **Archived**: the leading cell is left blank, so an archived row looks identical to an idle one.
 
-| | 不带插件 | 带插件 |
+The result is that idle, parked and archived sessions all look the same, long-tail sessions pile up, and there is no way to see at a glance which sessions should be put away. This plugin brings the three-way split back and parks sessions that have had no conversation for 5 days.
+
+| | Without this plugin | With this plugin |
 |---|---|---|
-| 空闲 | 什么都没有 | 🟦 蓝点 |
-| 挂起（手动/自动） | 无法表达 | ⚪ 灰空心环 |
-| 归档 | 与空闲无法区分 | ⚫ 灰实心点（时间右侧） |
-| 待审批 / 进行中 / 有新结果 | DSH 原生灯 | 保持不变 |
+| Idle | nothing | 🟦 blue dot |
+| Parked (manual / automatic) | not expressible | ⚪ hollow grey ring |
+| Archived | indistinguishable from idle | ⚫ solid grey dot (right of the time) |
+| Pending / running / unread | DSH native lamps | unchanged |
 
-![侧栏效果](docs/preview.png)
+![Sidebar result](docs/preview.png)
 
-## 三种灯的含义
+## What the three lamps mean
 
-| 灯 | 状态 | 判定方式 | 渲染位置 |
+| Lamp | State | How it is decided | Where it renders |
 |---|---|---|---|
-| 🟦 蓝色实心点 | 空闲 | 原生主状态为 idle，且未被标记挂起 | 行首 16px 格 |
-| ⚪ 灰色空心环 | 已挂起 | 手动标记，**或**最后活动距今 ≥ 5 天 | 行首 16px 格 |
-| ⚫ 灰色实心点 | 已归档 | 会话在归档集合中 | 时间右侧（DSH 归档行行首不渲染任何席位的硬限制） |
+| 🟦 blue filled dot | Idle | the native primary state is idle and the session is not parked | leading 16px cell |
+| ⚪ hollow grey ring | Parked | marked manually, **or** last activity ≥ 5 days ago | leading 16px cell |
+| ⚫ solid grey dot | Archived | the session is in the archived set | right of the time label (DSH hard-codes an empty leading cell for archived rows) |
 
-优先级：**原生四态 > 挂起 > 空闲**。所以挂起中的会话一旦开始运行，会被原生进行中环覆盖；产生未读结果时被绿点覆盖；恢复空闲后挂起环再出现。归档态独立展示，压过挂起态。
+Priority: **native four states > parked > idle**. A parked session that starts running is covered by the native running ring; an unread result covers it with the green dot; the parked ring returns once the row is idle again. Archived is shown independently and outranks parked.
 
-## 安装
+## Install
 
-前置：DSH 0.2.2-rc.1 或更新版本；已知 profile 名（桌面版是 `desktop`，Web 版是 `web`）。
+Requires DSH 0.2.2-rc.1 or newer, and the name of the profile you actually run (the desktop app uses `desktop`, the web build uses `web`).
 
-**方式一：npm（推荐）**
+**Option 1: npm (recommended)**
 
 ```sh
 dsh plugin --profile desktop add dsh-status-lamp
 ```
 
-**方式二：GitHub（建议锁到具体 commit 再用于生产）**
+**Option 2: GitHub (pin a commit for production)**
 
 ```sh
 dsh plugin --profile desktop add github:SpokAtom/dsh-status-lamp
-# 锁定版本：dsh plugin --profile desktop add github:SpokAtom/dsh-status-lamp#<commit>
+# pinned: dsh plugin --profile desktop add github:SpokAtom/dsh-status-lamp#<commit>
 ```
 
-**方式三：本地目录（开发用）**
+**Option 3: a local directory (development)**
 
 ```sh
 dsh plugin --profile desktop add "D:\path\to\dsh-status-lamp"
 ```
 
-装完重启应用（`desktop` profile 只在启动时读 bundles）；Web 端刷新页面即可。
+Restart the app afterwards — the `desktop` profile reads its bundles at startup. The web build only needs a page refresh.
 
-**验证安装**：打开「插件」页，列表里应出现「状态灯」；回到对话，侧栏空闲会话行首应出现蓝点。
+**Verify**: open the Plugins page; a "Status lamp" entry should be listed. Back in a conversation, idle session rows should show a blue dot.
 
-## 使用
+## Usage
 
-### 1. 空闲蓝点（自动）
+### 1. Idle blue dot (automatic)
 
-装好即生效，不需要配置。任何原生状态为 idle 的会话都会显示蓝点。
+Works as soon as the plugin is enabled; nothing to configure.
 
-### 2. 手动挂起 / 取消挂起
+### 2. Park / unpark a session manually
 
-1. 在侧栏找到目标会话行
-2. 右键（或点行尾的「…」按钮）打开菜单
-3. 选择「挂起会话」→ 行首变成灰空心环；再次打开菜单选择「取消挂起」→ 恢复蓝点
+1. Find the session row in the sidebar.
+2. Right-click it (or click the `…` button at the end of the row).
+3. Pick **Park session** — the leading cell turns into a hollow grey ring. Right-click again and pick **Unpark session** to restore the blue dot.
 
-「取消挂起」会记录一个**唤醒时刻**：5 天规则不会立刻把刚唤醒的会话重新挂起；等这个会话产生新对话后，规则自动重新生效。
+Unparking records a **wake-up timestamp**: the five-day rule will not immediately re-park a session you just woke. Once the session gets new conversation, the rule applies again.
 
-### 3. 5 天无对话自动挂起
+### 3. Automatic parking after 5 quiet days
 
-会话的最近活动时间（`updatedAt`）距今满 5 天时，自动变成灰空心环，不需要刷新页面——插件内部有一个分钟级时钟会重算。
+When a session's last activity (`updatedAt`) is at least five days old, it turns into a hollow grey ring without a page refresh — a minute-level clock recomputes it.
 
-阈值是一个常量，改完重新安装即可：
+The threshold is a constant; change it and reinstall:
 
 ```js
 // client.js
-const AUTO_PARK_MS = 5 * 24 * 60 * 60 * 1000; // 想改成 7 天就改成 7 * 24 * ...
+const AUTO_PARK_MS = 5 * 24 * 60 * 60 * 1000; // 7 days: 7 * 24 * ...
 ```
 
-### 4. 隐藏归档与挂起（在「视图选项」里）
+### 4. Hide archived and parked sessions
 
-1. 点侧栏「工作区」标题栏的**滑杆图标**打开「视图选项」
-2. 找到「**筛选会话**」分组，第一项就是「隐藏已归档及挂起」
-3. 点一下：所有归档行和挂起行消失；再点一下恢复
+1. Click the **sliders icon** in the "Workspaces" header to open the view options.
+2. The **Filter sessions** section has a new first item: **Hide archived and parked**.
+3. Click it once: archived and parked rows disappear. Click again: they come back.
 
-![筛选会话里的第一项（示意图）](docs/filter-menu.png)
+![First item in the Filter sessions section (illustration)](docs/filter-menu.png)
 
-开关状态存在浏览器本地，重启应用后保持。
+The switch is stored in browser local storage and survives restarts.
 
-### 5. 归档灯
+### 5. Archived rows
 
-用 DSH 自带的归档功能即可（会话行菜单 → 归档）。归档行会显示灰实心点，位置在相对时间左侧。
+Use DSH's own archive action (session row menu → Archive). Archived rows get the solid grey dot, placed to the left of the relative time.
 
-## 判定细节
+## Decision order
 
 ```text
-1. 原生待审批 / 待问答 / 计划待审   → 原生琥珀点（本插件不介入）
-2. 原生活跃（运行中 / 子代理运行中） → 原生动画环（本插件不介入）
-3. 原生未读完成                     → 原生绿点（本插件不介入）
-4. 手动挂起标记                     → 灰空心环
-5. 最后活动 ≥ 5 天且未被唤醒         → 灰空心环
-6. 其余                             → 蓝点
+1. native pending / plan review / question  -> native amber dot (this plugin stays out)
+2. native running / running subagents       -> native animated ring (stays out)
+3. native unread completion                 -> native green dot (stays out)
+4. manual park mark                         -> hollow grey ring
+5. last activity >= 5 days and not woken    -> hollow grey ring
+6. everything else                          -> blue dot
 ```
 
-- 「最后活动」取 DSH 会话列表快照里的 `updatedAt`，不读会话正文。
-- 手动挂起只影响视觉，**不会阻止会话运行、也不会中断任务**。
+- "Last activity" is `updatedAt` from DSH's session list snapshot; the plugin never reads conversation content.
+- Manual parking is visual only: it does **not** block execution or interrupt tasks.
 
-## 数据与配置
+## Data and configuration
 
-| 数据 | 位置 | 说明 |
+| Data | Location | Shape |
 |---|---|---|
-| 挂起标记 / 唤醒时刻 | 浏览器 `localStorage` → `dsh.status-lamp.parked.v2` | `{ "explicit": ["会话ID"], "awake": { "会话ID": 时间戳 } }` |
-| 过滤开关 | 浏览器 `localStorage` → `dsh.status-lamp.filter.v1` | `hide` 或 `show` |
-| 自定义阈值 | `client.js` 的 `AUTO_PARK_MS` | 修改后重新安装插件 |
+| park marks / wake timestamps | browser `localStorage` → `dsh.status-lamp.parked.v2` | `{ "explicit": ["sessionId"], "awake": { "sessionId": timestamp } }` |
+| filter switch | browser `localStorage` → `dsh.status-lamp.filter.v1` | `hide` or `show` |
+| threshold | `AUTO_PARK_MS` in `client.js` | reinstall after editing |
 
-示例（清空所有手动标记）：
+Example — clear all manual marks:
 
 ```js
 localStorage.removeItem('dsh.status-lamp.parked.v2')
 ```
 
-## 兼容性
+## Compatibility
 
-- 在 **DSH 0.2.2-rc.1 / rc.3**、`desktop` profile、Windows 上开发与验证。
-- `package.json` 声明 `"engines": { "dsh": ">=0.2.2-rc.1" }`。
-- 只用官方扩展点：`sidebar.session.row.leading`、`sidebar.session.row.trailing`、`sidebar.workspaces.session.menu.item`（会话菜单项走 `ctx.contextMenus`）、Client `locale`/`contextMenus`/`sessions` 服务。
-- 过滤项属于**DOM 级增补**：DSH 的「视图选项」菜单没有插件插槽，插件在该菜单打开时克隆一个原生菜单行插入「筛选会话」分组，并用自有样式表隐藏行。**DSH 升级若改动菜单结构，这一项会静默消失（不会破坏原生 UI）**。
+- Developed and verified on **DSH 0.2.2-rc.1 / rc.3**, `desktop` profile, Windows.
+- `package.json` declares `"engines": { "dsh": ">=0.2.2-rc.1" }`.
+- Uses official extension points only: `sidebar.session.row.leading`, `sidebar.session.row.trailing`, the session-row menu via `ctx.contextMenus`, and the Client `locale` / `contextMenus` / `sessions` services.
+- The filter row is a **DOM-level addition**: DSH's view-options menu exposes no plugin slot, so the plugin clones a native menu row into the "Filter sessions" section while the menu is open, and hides rows through its own stylesheet. **If a DSH upgrade changes that menu, the item silently disappears; the native UI is never broken.**
 
-## 故障排查
+## Troubleshooting
 
-| 症状 | 可能原因 | 处理 |
+| Symptom | Likely cause | Fix |
 |---|---|---|
-| 侧栏没有蓝点 | 插件没启用 / 装到了别的 profile | 「插件」页确认「状态灯」为启用；确认装的是当前应用用的 profile |
-| 挂起会话仍显示蓝点 | 该会话正在运行或有未读结果 | 属预期：原生状态优先，等它回到空闲 |
-| 「视图选项」里没有「隐藏已归档及挂起」 | DSH 版本改了菜单结构（DOM 增补失效） | 升级插件；或先用「隐藏已归档」原生过滤 + 行菜单手动挂起 |
-| 勾选后列表没变化 | 当前视图没有归档/挂起会话 | 正常，没有可隐藏的行 |
-| 重启后手动标记丢失 | 清理了站点数据 / 换了浏览器 | 手动标记是浏览器本地数据；自动挂起不受影响 |
-| 工作区标题还在但下面空了 | 过滤只隐藏会话行，不隐藏分组 | 已知限制 |
+| No blue dots in the sidebar | plugin disabled, or installed into a different profile | check the Plugins page; make sure it was added to the profile the app runs |
+| A parked session still shows a blue dot | it is running or has unread results | expected: native states outrank parked |
+| No "Hide archived and parked" item | the DSH version changed the menu structure (DOM addition) | update the plugin; meanwhile use the native "Hide archived" filter and park rows manually |
+| Ticking the switch changes nothing | there are no archived or parked sessions in this view | expected |
+| Manual marks gone after restart | site data cleared / different browser | marks are browser-local; automatic parking is unaffected |
+| Empty workspace header remains | the filter hides session rows only | known limitation |
 
-## 权限与隐私
+## Permissions and privacy
 
-- 不发起任何网络请求，不上传任何内容。
-- 不写 Host、不写会话日志；归档与时间事实都读 DSH 自己的列表快照。
-- 只在本机浏览器存储里保存挂起标记与过滤开关。
+- No network requests; nothing is uploaded.
+- No writes to the Host or to session logs; archive membership and timestamps come from DSH's own list snapshot.
+- Only local browser storage holds the park marks and the filter switch.
 
-## 开发
-
-```text
-index.js            Host 半区（空实现，仅让 bundle 成立）
-client.js           全部逻辑：两个行席位、挂起菜单动作、视图选项过滤行
-cordis.patch.yml    bundle patch：插入 status-lamp 行
-locale/{zh,en}.json 插件管理器里的标题与描述
-docs/               配图
-DESIGN.md           设计说明与取舍
-```
-
-改完 `client.js` 后需要重装（link 安装不会热更新）：
+## Development
 
 ```text
-plugin_manager: remove_bundle dsh-status-lamp → install_bundle "D:\dsh space\plugins\dsh-status-lamp"
+index.js             Host half (empty; makes the bundle valid)
+client.js            all logic: two row seats, park menu action, view-options filter row
+cordis.patch.yml     bundle patch inserting the status-lamp row
+locale/{zh,en}.json  title and description shown in Plugin Manager
+docs/                images
+DESIGN.md            design notes and trade-offs
 ```
 
-## English
+Reinstall after editing `client.js` (a linked install does not hot-reload):
 
-A session-row status lamp for DeepSeek Harness: a blue dot for idle, a hollow grey ring for parked (marked manually, or automatic after 5 days without conversation), and a solid grey dot for archived rows. A "hide archived and parked" toggle is added as the first item of the **Filter sessions** section in the view-options menu. Native pending / running / unread lamps are untouched.
-
-Install: `dsh plugin --profile desktop add dsh-status-lamp` (or `github:SpokAtom/dsh-status-lamp`). Restart the app. Right-click a session row to park/unpark it; open the view-options (sliders) menu and tick **Hide archived and parked** to filter the list. Marks live in `localStorage`; nothing is sent over the network.
+```text
+plugin_manager: remove_bundle dsh-status-lamp -> install_bundle "D:\dsh space\plugins\dsh-status-lamp"
+```
 
 ## License
 
