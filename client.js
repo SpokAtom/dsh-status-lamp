@@ -155,6 +155,26 @@ window.__ModuleLoader__.load({
         if (!changed) return;
         publish({ explicit, awake });
       },
+      /**
+       * Parking ends the moment a Session runs again: clear its explicit mark and
+       * wake record so the row returns to the plain idle/native state.
+       */
+      releaseRunning(runningIds) {
+        if (runningIds.size === 0) return;
+        const explicit = new Set();
+        const awake = new Map();
+        let changed = false;
+        for (const id of stored.explicit) {
+          if (runningIds.has(id)) changed = true;
+          else explicit.add(id);
+        }
+        for (const [id, at] of stored.awake) {
+          if (runningIds.has(id)) changed = true;
+          else awake.set(id, at);
+        }
+        if (!changed) return;
+        publish({ explicit, awake });
+      },
     };
 
     // ---------------------------------------------------------------- clock --
@@ -187,6 +207,8 @@ window.__ModuleLoader__.load({
     // ------------------------------------------------------------- deriving --
     /** Why a session is parked: 'manual', 'auto', or null when it is awake. */
     function parkedBy(snapshot, sessionId, row, now) {
+      // A running Session is by definition not parked: running releases the mark.
+      if (row !== undefined && row.running === true) return null;
       if (snapshot.explicit.has(sessionId)) return 'manual';
       if (row === undefined || row.blank === true) return null;
       if (row.updatedAt <= 0) return null;
@@ -352,6 +374,7 @@ window.__ModuleLoader__.load({
         return {
           updatedAt: typeof summary.updatedAt === 'number' ? summary.updatedAt : 0,
           blank: summary.blank === true,
+          running: summary.running === true,
         };
       };
 
@@ -390,6 +413,9 @@ window.__ModuleLoader__.load({
             order: 550,
             resolve: ({ sessionId }) => {
               const row = rowOf(sessionId);
+              // A running Session cannot stay parked: running always releases the
+              // mark, so offering park/unpark here would be misleading.
+              if (row !== undefined && row.running) return [];
               // Same clock the row seats read, so the menu and the lamp never
               // disagree about the five-day boundary by an instant.
               const reason = parkedBy(parkedStore.getSnapshot(), sessionId, row, clock.getSnapshot());
@@ -617,27 +643,33 @@ window.__ModuleLoader__.load({
         'status-lamp: filter row locale',
       );
 
-      // Drop marks for sessions the Host no longer lists, once the list is ready.
+      // Keep stored marks in step with the Host's list: drop dead ids once the
+      // list is ready, and release marks for Sessions that are running again.
       ctx.effect(() => {
         let pruned = false;
-        const pruneOnce = () => {
+        const reconcile = () => {
           try {
-            if (pruned) return;
-            const ids = ctx.sessions.list.getSnapshot().ids;
-            if (!Array.isArray(ids) || ids.length === 0) return;
-            pruned = true;
-            parkedStore.prune(ids);
+            const snapshot = ctx.sessions.list.getSnapshot();
+            const ids = Array.isArray(snapshot.ids) ? snapshot.ids : [];
+            if (!pruned && ids.length > 0) {
+              pruned = true;
+              parkedStore.prune(ids);
+            }
+            const running = new Set();
+            const byId = snapshot.byId === undefined ? {} : snapshot.byId;
+            for (const id of ids) if (byId[id]?.running === true) running.add(id);
+            parkedStore.releaseRunning(running);
           } catch (error) {
-            console.warn('[dsh-status-lamp] park mark prune failed', error);
+            console.warn('[dsh-status-lamp] park mark reconcile failed', error);
           }
         };
-        pruneOnce();
+        reconcile();
         const source = ctx.sessions.list;
-        const off = typeof source.subscribe === 'function' ? source.subscribe(pruneOnce) : undefined;
+        const off = typeof source.subscribe === 'function' ? source.subscribe(reconcile) : undefined;
         return () => {
           if (typeof off === 'function') off();
         };
-      }, 'status-lamp: prune park marks');
+      }, 'status-lamp: reconcile park marks');
     }
 
     return { inject, apply };

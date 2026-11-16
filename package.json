@@ -15,7 +15,10 @@
     "status-lamp",
     "session",
     "sidebar",
-    "ui"
+    "ui",
+    "status-light",
+    "status-indicator",
+    "indicator"
   ],
   "repository": {
     "type": "git",

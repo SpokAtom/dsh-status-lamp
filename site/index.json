@@ -12,12 +12,12 @@
     {
       "name": "dsh-status-lamp",
       "title": {
-        "en": "Status lamp",
+        "en": "Status light",
         "zh": "状态灯"
       },
       "description": {
-        "en": "Session-row status lamp: blue idle, hollow parked (manual or 5 days quiet), solid archived.",
-        "zh": "会话行状态灯：空闲蓝点、挂起灰空心（手动或 5 天无对话）、归档灰实心。"
+        "en": "Session-row status light (status indicator): blue idle, hollow grey parked (manual or automatic after 5 quiet days, released when the session runs), solid grey archived.",
+        "zh": "会话行状态灯（状态指示灯）：空闲蓝点、挂起灰空心（手动或 5 天无对话自动，恢复运行即解除）、归档灰实心。"
       },
       "icon": "icons/status-lamp.svg",
       "author": "SpokAtom",
@@ -29,26 +29,42 @@
         {
           "version": "1.1.2",
           "publishTimestamp": 1794834781,
-          "source": { "type": "npm" },
-          "engines": { "dsh": ">=0.2.2-rc.1" }
+          "source": {
+            "type": "npm"
+          },
+          "engines": {
+            "dsh": ">=0.2.2-rc.1"
+          }
         },
         {
           "version": "1.1.1",
           "publishTimestamp": 1794834293,
-          "source": { "type": "npm" },
-          "engines": { "dsh": ">=0.2.2-rc.1" }
+          "source": {
+            "type": "npm"
+          },
+          "engines": {
+            "dsh": ">=0.2.2-rc.1"
+          }
         },
         {
           "version": "1.1.0",
           "publishTimestamp": 1794833745,
-          "source": { "type": "npm" },
-          "engines": { "dsh": ">=0.2.2-rc.1" }
+          "source": {
+            "type": "npm"
+          },
+          "engines": {
+            "dsh": ">=0.2.2-rc.1"
+          }
         },
         {
           "version": "1.0.0",
           "publishTimestamp": 1794675758,
-          "source": { "type": "npm" },
-          "engines": { "dsh": ">=0.2.2-rc.1" }
+          "source": {
+            "type": "npm"
+          },
+          "engines": {
+            "dsh": ">=0.2.2-rc.1"
+          }
         }
       ]
     }

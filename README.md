@@ -1,8 +1,10 @@
-# Status lamp · dsh-status-lamp
+# Status light · dsh-status-lamp
 
-A status lamp for the session rows in the DeepSeek Harness sidebar: a blue dot for idle, a hollow grey ring for parked, a solid grey dot for archived — plus a one-click **Hide archived and parked** toggle in the view options menu. Pending, running and unread lamps stay exactly as DSH ships them.
+A **status light (status indicator)** for the session rows in the DeepSeek Harness sidebar: a blue dot for idle, a hollow grey ring for parked, a solid grey dot for archived — plus a one-click **Hide archived and parked** toggle in the view options menu. Pending, running and unread lamps stay exactly as DSH ships them.
 
 English | [简体中文](README.zh-CN.md)
+
+![The three lamps](docs/legend-en.png)
 
 ## Why it exists
 
@@ -19,10 +21,6 @@ The result is that idle, parked and archived sessions all look the same, long-ta
 | Parked (manual / automatic) | not expressible | ⚪ hollow grey ring |
 | Archived | indistinguishable from idle | ⚫ solid grey dot (right of the time) |
 | Pending / running / unread | DSH native lamps | unchanged |
-
-![Sidebar result](docs/preview.png)
-
-*Sample session titles are the author's own data in Chinese; the lamps themselves are language-independent.*
 
 ## What the three lamps mean
 
@@ -91,6 +89,8 @@ const AUTO_PARK_MS = 5 * 24 * 60 * 60 * 1000; // 7 days: 7 * 24 * ...
 1. Click the **sliders icon** in the "Workspaces" header to open the view options.
 2. The **Filter sessions** section has a new first item: **Hide archived and parked**.
 3. Click it once: archived and parked rows disappear. Click again: they come back.
+
+![The Filter sessions section with the new first item (illustration)](docs/filter-menu-en.png)
 
 The switch is stored in browser local storage and survives restarts.
 

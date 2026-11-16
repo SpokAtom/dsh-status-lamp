@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Status lamp",
-    "description": "Session-row status lamp: blue idle, hollow parked (manual or after 5 quiet days), solid archived; hide archived and parked from the view-options menu. Pending, running and unread keep DSH's own lamps."
+    "title": "Status light",
+    "description": "Session-row status light (status indicator): blue idle, hollow grey parked (manual, or automatic after 5 quiet days — released as soon as the session runs again), solid grey archived; hide archived and parked from the view-options menu. Pending, running and unread keep DSH's own lamps."
   }
 }

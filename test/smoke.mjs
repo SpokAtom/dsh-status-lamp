@@ -138,6 +138,13 @@ const menuActions = [];
 let localeDicts = null;
 let localeListeners = [];
 
+let listSnapshot = { ids: [], byId: {} };
+const listListeners = [];
+const emitList = (next) => {
+  listSnapshot = next;
+  for (const listener of [...listListeners]) listener();
+};
+
 const ctx = {
   effect(factory) {
     const cleanup = factory();
@@ -177,8 +184,14 @@ const ctx = {
   },
   sessions: {
     list: {
-      getSnapshot: () => ({ ids: [], byId: {} }),
-      subscribe: () => () => {},
+      getSnapshot: () => listSnapshot,
+      subscribe(listener) {
+        listListeners.push(listener);
+        return () => {
+          const index = listListeners.indexOf(listener);
+          if (index >= 0) listListeners.splice(index, 1);
+        };
+      },
     },
   },
 };
@@ -209,6 +222,18 @@ second[0].run();
 const afterUnpark = JSON.parse(storage.get('dsh.status-lamp.parked.v2'));
 assert.deepEqual(afterUnpark.explicit, [], 'unpark should clear the explicit mark');
 
+// Park again, then let the Host report the Session as running: the mark must go.
+const third = action.resolve({ sessionId: 'session-1' });
+assert.equal(third[0].id, 'park');
+third[0].run();
+emitList({ ids: ['session-1'], byId: { 'session-1': { running: true } } });
+const afterRunning = JSON.parse(storage.get('dsh.status-lamp.parked.v2'));
+assert.deepEqual(afterRunning.explicit, [], 'a running Session must release its park mark');
+assert.equal(action.resolve({ sessionId: 'session-1' }).length, 0, 'running Sessions offer no park action');
+
+emitList({ ids: ['session-1'], byId: { 'session-1': { running: false } } });
+assert.equal(action.resolve({ sessionId: 'session-1' })[0].id, 'park', 'an idle Session can be parked again');
+
 assert.ok(localeDicts !== null, 'locale dictionaries were not registered');
 const zhKeys = Object.keys(localeDicts.zh).sort();
 const enKeys = Object.keys(localeDicts.en).sort();
@@ -228,6 +253,7 @@ for (const cleanup of cleanups) cleanup();
 console.log('PASS seats:', registeredIds.join(', '));
 console.log('PASS menu action:', action.id);
 console.log('PASS park/unpark round trip and persistence');
+console.log('PASS running Session releases its park mark');
 console.log('PASS zh/en dictionary key parity:', zhKeys.length, 'keys');
 console.log('PASS filter stylesheet and root attribute');
 console.log('PASS locale listener installed');
