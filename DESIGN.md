@@ -50,7 +50,18 @@
 - 安装位置：`D:\dsh space\plugins\dsh-status-lamp`（link 安装进 `desktop` profile，bundle 名 `dsh-status-lamp`）。
 - 自测：① 5 天以上无对话的会话应显示灰空心环；② 近几天有活动的会话显示蓝点；③ 右键任一会话 → 「挂起会话」→ 变灰空心环，再点「取消挂起」→ 恢复蓝点，且不会立刻被自动规则重新挂起；④ 视图选项切到「全部对话」，归档行时间右侧出现灰实心点。
 
-## 六、已知限制
+## 六、视图选项过滤（1.1.0）
+
+- **位置**：侧栏「视图选项」下拉（滑杆图标）第一行，文案「隐藏已归档及挂起」。
+- **行为**：开 → 隐藏所有归档行与挂起行（显式 + 自动）；关 → 恢复。状态存 `localStorage` `dsh.status-lamp.filter.v1`（`hide` / `show`）。
+- **实现**：该下拉由 `dsh-client-ui-workspace` 内置，**没有任何 slot**（实时 slot 树核对：`sidebar.workspaces` 下只有 4 个会话行席位），所以采用 DOM 级增补：
+  1. `MutationObserver` 监听 body，发现带 `viewOptionsMenu` 类后缀的菜单根节点时，克隆第一个原生 `button[role="menuitem"]`（继承同样的类名与图标/标签结构），改写图标（眼睛/划掉的眼睛）、文案与点击行为，插到首个 label 之前。
+  2. 菜单关闭即随 DOM 消失；每次打开重新插入。
+  3. 过滤本身用自有样式表：`html[data-status-lamp-filter="hide"] [data-row-key^="session:"]` 命中 `[class*="_archived"]` 或 `:has([data-status-lamp="parked"|"parked-auto"])` 的行 `display:none`。
+- **降级**：找不到菜单 → 不插行；选择器不命中 → 不隐藏。任何一步失败都退回原生 UI，不报错、不改原生菜单的键盘导航。
+- **代价**：依赖 ui-workspace 的类名后缀（`viewOptionsMenu`、`_archived`）与行锚点 `data-row-key="session:<id>"`；DSH 升级改这些会失效，需要跟着修。
+
+## 七、已知限制
 
 - 归档行的灯只能落在 trailing 席位（DSH 硬编码该格留空），与空闲/挂起的行首位置不对称；这是为守住「不替换原生行渲染」这条可升级边界而做的取舍。
 - 「无对话」用 `Session.updatedAt` 近似（DSH 列表快照里唯一的最后活动时间），不区分消息、标题或元数据变更。

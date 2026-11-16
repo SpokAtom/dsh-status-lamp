@@ -39,6 +39,9 @@ window.__ModuleLoader__.load({
       'state.archived': '已归档',
       'menu.park': '挂起会话',
       'menu.unpark': '取消挂起',
+      'filter.label': '隐藏已归档及挂起',
+      'filter.tip.on': '已开启：点击显示归档和挂起的会话',
+      'filter.tip.off': '已关闭：点击隐藏归档和挂起的会话',
     };
     const en = {
       'state.idle': 'Idle',
@@ -47,6 +50,9 @@ window.__ModuleLoader__.load({
       'state.archived': 'Archived',
       'menu.park': 'Park session',
       'menu.unpark': 'Unpark session',
+      'filter.label': 'Hide archived and parked',
+      'filter.tip.on': 'On — click to show archived and parked sessions',
+      'filter.tip.off': 'Off — click to hide archived and parked sessions',
     };
 
     // ---------------------------------------------------------------- store --
@@ -261,6 +267,50 @@ window.__ModuleLoader__.load({
       return lampFrame('archived', t('state.archived'), ARCHIVED_DOT);
     }
 
+    // -------------------------------------------------------------- filter --
+    // The view-options dropdown belongs to ui-workspace and exposes no slot, so
+    // this is a DOM-level enhancement: every time that menu opens, one extra row
+    // is cloned from a shipped item and inserted at its top. The row toggles a
+    // stylesheet rule that hides parked and archived session rows. Everything
+    // fails open — no menu found, no rule matched, no hiding — and the shipped UI
+    // keeps working unchanged.
+    const FILTER_KEY = 'dsh.status-lamp.filter.v1';
+    const FILTER_ATTR = 'data-status-lamp-filter';
+    /** The shipped menu's CSS-module class suffix; the hash prefix may change. */
+    const FILTER_MENU_SELECTOR = '[class*="viewOptionsMenu"]';
+    const FILTER_ITEM_ATTR = 'data-status-lamp-filter-item';
+    const FILTER_STYLE_ID = 'dsh-status-lamp-filter-css';
+    const EYE_ON =
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12c1.4-4.1 4.7-7 9-7s7.6 2.9 9 7c-1.4 4.1-4.7 7-9 7s-7.6-2.9-9-7Z"/><circle cx="12" cy="12" r="2.6"/></svg>';
+    const EYE_OFF =
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 5 14 14"/><path d="M9.9 5.2A9.6 9.6 0 0 1 12 5c4.3 0 7.6 2.9 9 7a11.6 11.6 0 0 1-2.4 3.5"/><path d="M5.4 7.4A11.8 11.8 0 0 0 3 12c1.4 4.1 4.7 7 9 7 1.1 0 2.1-.2 3.1-.6"/><path d="M10.5 10.5a2.1 2.1 0 0 0 3 3"/></svg>';
+    const FILTER_CSS =
+      'html[' +
+      FILTER_ATTR +
+      '="hide"] [data-row-key^="session:"][class*="_archived"],' +
+      'html[' +
+      FILTER_ATTR +
+      '="hide"] [data-row-key^="session:"]:has([data-status-lamp="parked"]),' +
+      'html[' +
+      FILTER_ATTR +
+      '="hide"] [data-row-key^="session:"]:has([data-status-lamp="parked-auto"]){' +
+      'display:none !important}';
+
+    /** Persisted filter mode: 'hide' hides parked + archived rows, 'show' keeps them. */
+    function readFilterMode() {
+      try {
+        return window.localStorage.getItem(FILTER_KEY) === 'hide' ? 'hide' : 'show';
+      } catch {
+        return 'show';
+      }
+    }
+
+    let filterMode = readFilterMode();
+
+    function applyFilterAttribute() {
+      document.documentElement.setAttribute(FILTER_ATTR, filterMode);
+    }
+
     const inject = ['slots', 'locale', 'contextMenus', 'sessions'];
 
     /**
@@ -333,6 +383,117 @@ window.__ModuleLoader__.load({
           }),
         'status-lamp: park menu action',
       );
+
+      // ---- view-options filter row (DOM-level, see the constants above) ----
+      const filterLabel = () => t('filter.label');
+      const filterTip = () => t(filterMode === 'hide' ? 'filter.tip.on' : 'filter.tip.off');
+
+      const refreshFilterItem = () => {
+        const node = document.querySelector('[' + FILTER_ITEM_ATTR + ']');
+        if (node === null) return;
+        node.setAttribute('aria-label', filterLabel());
+        node.title = filterTip();
+        const icon = node.querySelector('[class*="itemIcon"]');
+        if (icon !== null) icon.innerHTML = filterMode === 'hide' ? EYE_OFF : EYE_ON;
+      };
+
+      const toggleFilter = () => {
+        filterMode = filterMode === 'hide' ? 'show' : 'hide';
+        try {
+          window.localStorage.setItem(FILTER_KEY, filterMode);
+        } catch {
+          /* Filtering still works for this page load without storage. */
+        }
+        applyFilterAttribute();
+        refreshFilterItem();
+      };
+
+      /** Clone a shipped menu row so the extra row inherits its exact styling. */
+      const buildFilterItem = (anchor) => {
+        const node = anchor.cloneNode(true);
+        for (const name of [
+          'id',
+          'aria-haspopup',
+          'aria-current',
+          'aria-keyshortcuts',
+          'aria-describedby',
+          'aria-selected',
+          'aria-checked',
+        ]) {
+          node.removeAttribute(name);
+        }
+        // A clone of the selected row would keep the selected paint; strip it
+        // from the row and its children so the extra row reads as neutral.
+        for (const element of [node, ...node.querySelectorAll('*')]) {
+          if (!element.classList) continue;
+          for (const name of [...element.classList]) {
+            if (/_selected|_danger/.test(name)) element.classList.remove(name);
+          }
+        }
+        node.setAttribute(FILTER_ITEM_ATTR, '');
+        node.setAttribute('aria-label', filterLabel());
+        node.title = filterTip();
+        const icon = node.querySelector('[class*="itemIcon"]');
+        if (icon !== null) icon.innerHTML = filterMode === 'hide' ? EYE_OFF : EYE_ON;
+        for (const check of node.querySelectorAll('[class*="_check"]')) check.style.display = 'none';
+        const label = node.querySelector('[class*="itemLabel"]');
+        if (label !== null) label.textContent = filterLabel();
+        node.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          toggleFilter();
+        });
+        return node;
+      };
+
+      /** Insert the filter row above the first shipped option, once per open. */
+      const ensureFilterItem = () => {
+        const menu = document.querySelector(FILTER_MENU_SELECTOR);
+        if (menu === null) return;
+        if (menu.querySelector('[' + FILTER_ITEM_ATTR + ']') !== null) return;
+        const anchor = menu.querySelector('button[role="menuitem"]');
+        if (anchor === null) return;
+        const parent = anchor.parentNode;
+        if (parent === null) return;
+        parent.insertBefore(buildFilterItem(anchor), anchor);
+      };
+
+      const menuObserver = new MutationObserver((records) => {
+        for (const record of records) {
+          for (const added of record.addedNodes) {
+            if (added.nodeType !== 1 || !(added instanceof Element)) continue;
+            if (added.matches(FILTER_MENU_SELECTOR) || added.querySelector(FILTER_MENU_SELECTOR) !== null) {
+              ensureFilterItem();
+              return;
+            }
+          }
+        }
+      });
+
+      ctx.effect(() => {
+        applyFilterAttribute();
+        let style = document.getElementById(FILTER_STYLE_ID);
+        const created = style === null;
+        if (style === null) {
+          style = document.createElement('style');
+          style.id = FILTER_STYLE_ID;
+          document.head.appendChild(style);
+        }
+        style.textContent = FILTER_CSS;
+        return () => {
+          if (created) style.remove();
+          document.documentElement.removeAttribute(FILTER_ATTR);
+        };
+      }, 'status-lamp: filter styles');
+
+      ctx.effect(() => {
+        menuObserver.observe(document.body, { childList: true, subtree: true });
+        ensureFilterItem();
+        return () => {
+          menuObserver.disconnect();
+          for (const node of document.querySelectorAll('[' + FILTER_ITEM_ATTR + ']')) node.remove();
+        };
+      }, 'status-lamp: filter menu row');
     }
 
     return { inject, apply };
