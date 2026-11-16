@@ -28,8 +28,8 @@ window.__ModuleLoader__.load({
     const LEGACY_STORAGE_KEY = 'dsh.status-lamp.parked.v1';
     /** A session with no conversation activity for this long parks by itself. */
     const AUTO_PARK_MS = 5 * 24 * 60 * 60 * 1000;
-    /** Re-evaluate relative times once a minute; five days needs no finer grain. */
-    const CLOCK_MS = 60 * 1000;
+    /** Re-evaluate relative times every five minutes; a five-day bar needs no finer grain. */
+    const CLOCK_MS = 5 * 60 * 1000;
 
     /** Simplified Chinese dictionary (key-set source of truth). */
     const zh = {
@@ -59,6 +59,7 @@ window.__ModuleLoader__.load({
     // `explicit` holds user-marked sessions. `awake` remembers the Session's
     // updatedAt at the moment the user woke it, so the five-day rule does not
     // immediately re-park a session the user just unparked.
+    /** A fresh empty park state; each read returns new containers for reference comparison. */
     const emptyState = () => ({ explicit: new Set(), awake: new Map() });
 
     /** Read the persisted state, migrating the v1 id array and tolerating garbage. */
@@ -132,19 +133,33 @@ window.__ModuleLoader__.load({
         else next.awake.delete(sessionId);
         publish(next);
       },
-      /** Drop ids the Host no longer lists, so dead Sessions do not accumulate. */
+      /**
+       * Drop ids the Host no longer lists; no-op (and no publish) when clean.
+       * An empty known-id list means the snapshot is not ready yet, not that every
+       * Session disappeared, so it is ignored instead of wiping the marks.
+       */
       prune(knownIds) {
+        if (!Array.isArray(knownIds) || knownIds.length === 0) return;
         const known = new Set(knownIds);
-        const next = { explicit: new Set(stored.explicit), awake: new Map(stored.awake) };
-        for (const id of [...next.explicit]) if (!known.has(id)) next.explicit.delete(id);
-        for (const id of [...next.awake.keys()]) if (!known.has(id)) next.awake.delete(id);
-        publish(next);
+        const explicit = new Set();
+        const awake = new Map();
+        let changed = false;
+        for (const id of stored.explicit) {
+          if (known.has(id)) explicit.add(id);
+          else changed = true;
+        }
+        for (const [id, at] of stored.awake) {
+          if (known.has(id)) awake.set(id, at);
+          else changed = true;
+        }
+        if (!changed) return;
+        publish({ explicit, awake });
       },
     };
 
     // ---------------------------------------------------------------- clock --
-    // One shared minute clock; getSnapshot returns a cached value so every row
-    // re-renders at most once a minute and never loops inside React.
+    // One shared clock; getSnapshot returns a cached value so every row
+    // re-renders at most once per CLOCK_MS and never loops inside React.
     const clock = (() => {
       let value = Date.now();
       const listeners = new Set();
@@ -212,6 +227,13 @@ window.__ModuleLoader__.load({
       height: 10,
     };
 
+    /**
+     * Build one lamp indicator.
+     * @param kind - `data-status-lamp` value used by the filter stylesheet.
+     * @param label - accessible name and tooltip, already localized.
+     * @param dot - geometry/colour for the inner dot or ring.
+     * @returns the centered 10px cell that the row seat expects.
+     */
     function lampFrame(kind, label, dot) {
       return h(
         'span',
@@ -307,6 +329,7 @@ window.__ModuleLoader__.load({
 
     let filterMode = readFilterMode();
 
+    /** Mirror the stored mode onto the root element; the stylesheet keys off it. */
     function applyFilterAttribute() {
       document.documentElement.setAttribute(FILTER_ATTR, filterMode);
     }
@@ -367,7 +390,9 @@ window.__ModuleLoader__.load({
             order: 550,
             resolve: ({ sessionId }) => {
               const row = rowOf(sessionId);
-              const reason = parkedBy(parkedStore.getSnapshot(), sessionId, row, Date.now());
+              // Same clock the row seats read, so the menu and the lamp never
+              // disagree about the five-day boundary by an instant.
+              const reason = parkedBy(parkedStore.getSnapshot(), sessionId, row, clock.getSnapshot());
               return [
                 {
                   id: reason === null ? 'park' : 'unpark',
@@ -388,15 +413,27 @@ window.__ModuleLoader__.load({
       const filterLabel = () => t('filter.label');
       const filterTip = () => t(filterMode === 'hide' ? 'filter.tip.on' : 'filter.tip.off');
 
+      /**
+       * Repaint the injected row after the mode changed: same node, new label,
+       * tooltip and state icon, so the menu does not have to be rebuilt.
+       */
       const refreshFilterItem = () => {
-        const node = document.querySelector('[' + FILTER_ITEM_ATTR + ']');
-        if (node === null) return;
-        node.setAttribute('aria-label', filterLabel());
-        node.title = filterTip();
-        const icon = node.querySelector('[class*="itemIcon"]');
-        if (icon !== null) icon.innerHTML = filterMode === 'hide' ? EYE_OFF : EYE_ON;
+        try {
+          const node = document.querySelector('[' + FILTER_ITEM_ATTR + ']');
+          if (node === null) return;
+          node.setAttribute('aria-label', filterLabel());
+          node.title = filterTip();
+          const icon = node.querySelector('[class*="itemIcon"]');
+          if (icon !== null) icon.innerHTML = filterMode === 'hide' ? EYE_OFF : EYE_ON;
+        } catch (error) {
+          console.warn('[dsh-status-lamp] filter row refresh failed', error);
+        }
       };
 
+      /**
+       * Flip the filter mode: persist it, repaint the row, and let the stylesheet
+       * attribute hide or show parked and archived rows.
+       */
       const toggleFilter = () => {
         filterMode = filterMode === 'hide' ? 'show' : 'hide';
         try {
@@ -404,8 +441,12 @@ window.__ModuleLoader__.load({
         } catch {
           /* Filtering still works for this page load without storage. */
         }
-        applyFilterAttribute();
-        refreshFilterItem();
+        try {
+          applyFilterAttribute();
+          refreshFilterItem();
+        } catch (error) {
+          console.warn('[dsh-status-lamp] filter toggle failed', error);
+        }
       };
 
       /** Clone a shipped menu row so the extra row inherits its exact styling. */
@@ -493,32 +534,46 @@ window.__ModuleLoader__.load({
 
       /**
        * Insert once the menu is positioned: a menu that just mounted still sits at
-       * its pre-layout position, so retry briefly until the row lands.
+       * its pre-layout position, so retry briefly until the row lands or the menu
+       * goes away. A failure here must never surface — the native menu keeps
+       * working without the extra row.
        */
       let retryTimer = null;
-      const ensureWithRetry = (attempt = 0) => {
+      const clearRetry = () => {
         if (retryTimer !== null) {
           window.clearTimeout(retryTimer);
           retryTimer = null;
         }
-        ensureFilterItem();
-        const placed = [...document.querySelectorAll('[' + FILTER_ITEM_ATTR + ']')].some((node) =>
-          onScreen(node.getBoundingClientRect()),
-        );
-        if (placed) return;
-        if (attempt >= 8) return;
-        retryTimer = window.setTimeout(() => ensureWithRetry(attempt + 1), 80);
+      };
+      const ensureWithRetry = (attempt = 0) => {
+        clearRetry();
+        try {
+          ensureFilterItem();
+          const placed = [...document.querySelectorAll('[' + FILTER_ITEM_ATTR + ']')].some((node) =>
+            onScreen(node.getBoundingClientRect()),
+          );
+          if (placed) return;
+          if (attempt >= 6) return;
+          retryTimer = window.setTimeout(() => ensureWithRetry(attempt + 1), 80);
+        } catch (error) {
+          console.warn('[dsh-status-lamp] filter row injection failed', error);
+        }
       };
 
+      /** Re-insert the row whenever a view-options menu appears. */
       const menuObserver = new MutationObserver((records) => {
-        for (const record of records) {
-          for (const added of record.addedNodes) {
-            if (added.nodeType !== 1 || !(added instanceof Element)) continue;
-            if (added.matches(FILTER_MENU_SELECTOR) || added.querySelector(FILTER_MENU_SELECTOR) !== null) {
-              ensureWithRetry();
-              return;
+        try {
+          for (const record of records) {
+            for (const added of record.addedNodes) {
+              if (added.nodeType !== 1 || !(added instanceof Element)) continue;
+              if (added.matches(FILTER_MENU_SELECTOR) || added.querySelector(FILTER_MENU_SELECTOR) !== null) {
+                ensureWithRetry();
+                return;
+              }
             }
           }
+        } catch (error) {
+          console.warn('[dsh-status-lamp] view-options observer failed', error);
         }
       });
 
@@ -543,10 +598,46 @@ window.__ModuleLoader__.load({
         ensureWithRetry();
         return () => {
           menuObserver.disconnect();
-          if (retryTimer !== null) window.clearTimeout(retryTimer);
+          clearRetry();
           for (const node of document.querySelectorAll('[' + FILTER_ITEM_ATTR + ']')) node.remove();
         };
       }, 'status-lamp: filter menu row');
+
+      // A language switch rebuilds the injected row with the active locale's copy.
+      ctx.effect(
+        () =>
+          ctx.locale.subscribe(() => {
+            try {
+              for (const node of document.querySelectorAll('[' + FILTER_ITEM_ATTR + ']')) node.remove();
+              ensureWithRetry();
+            } catch (error) {
+              console.warn('[dsh-status-lamp] filter row locale refresh failed', error);
+            }
+          }),
+        'status-lamp: filter row locale',
+      );
+
+      // Drop marks for sessions the Host no longer lists, once the list is ready.
+      ctx.effect(() => {
+        let pruned = false;
+        const pruneOnce = () => {
+          try {
+            if (pruned) return;
+            const ids = ctx.sessions.list.getSnapshot().ids;
+            if (!Array.isArray(ids) || ids.length === 0) return;
+            pruned = true;
+            parkedStore.prune(ids);
+          } catch (error) {
+            console.warn('[dsh-status-lamp] park mark prune failed', error);
+          }
+        };
+        pruneOnce();
+        const source = ctx.sessions.list;
+        const off = typeof source.subscribe === 'function' ? source.subscribe(pruneOnce) : undefined;
+        return () => {
+          if (typeof off === 'function') off();
+        };
+      }, 'status-lamp: prune park marks');
     }
 
     return { inject, apply };

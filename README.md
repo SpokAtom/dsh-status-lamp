@@ -4,8 +4,6 @@ A status lamp for the session rows in the DeepSeek Harness sidebar: a blue dot f
 
 English | [简体中文](README.zh-CN.md)
 
-![The three lamps](docs/legend.png)
-
 ## Why it exists
 
 DSH's own lamp expresses only four states (pending interaction, running, unread completion, idle), and two of the states it cannot express are the ones that matter for a long sidebar:
@@ -23,6 +21,8 @@ The result is that idle, parked and archived sessions all look the same, long-ta
 | Pending / running / unread | DSH native lamps | unchanged |
 
 ![Sidebar result](docs/preview.png)
+
+*Sample session titles are the author's own data in Chinese; the lamps themselves are language-independent.*
 
 ## What the three lamps mean
 
@@ -91,8 +91,6 @@ const AUTO_PARK_MS = 5 * 24 * 60 * 60 * 1000; // 7 days: 7 * 24 * ...
 1. Click the **sliders icon** in the "Workspaces" header to open the view options.
 2. The **Filter sessions** section has a new first item: **Hide archived and parked**.
 3. Click it once: archived and parked rows disappear. Click again: they come back.
-
-![First item in the Filter sessions section (illustration)](docs/filter-menu.png)
 
 The switch is stored in browser local storage and survives restarts.
 
