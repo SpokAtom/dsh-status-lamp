@@ -27,14 +27,28 @@
       },
       "versions": [
         {
+          "version": "1.1.2",
+          "publishTimestamp": 1794834781,
+          "source": { "type": "npm" },
+          "engines": { "dsh": ">=0.2.2-rc.1" }
+        },
+        {
+          "version": "1.1.1",
+          "publishTimestamp": 1794834293,
+          "source": { "type": "npm" },
+          "engines": { "dsh": ">=0.2.2-rc.1" }
+        },
+        {
+          "version": "1.1.0",
+          "publishTimestamp": 1794833745,
+          "source": { "type": "npm" },
+          "engines": { "dsh": ">=0.2.2-rc.1" }
+        },
+        {
           "version": "1.0.0",
           "publishTimestamp": 1794675758,
-          "source": {
-            "type": "npm"
-          },
-          "engines": {
-            "dsh": ">=0.2.2-rc.1"
-          }
+          "source": { "type": "npm" },
+          "engines": { "dsh": ">=0.2.2-rc.1" }
         }
       ]
     }
