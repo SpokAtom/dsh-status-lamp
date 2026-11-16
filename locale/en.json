@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Status lamp",
-    "description": "Session-row status lamp: blue idle, hollow parked, solid archived; pending, running and unread keep DSH's own dots."
+    "description": "Session-row status lamp: blue idle, hollow parked (manual or after 5 quiet days), solid archived; hide archived and parked from the view-options menu. Pending, running and unread keep DSH's own lamps."
   }
 }
