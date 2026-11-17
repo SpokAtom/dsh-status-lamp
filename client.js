@@ -598,11 +598,30 @@ window.__ModuleLoader__.load({
         return node;
       };
 
-      /** Hide the shipped filter rows: the section is replaced by our two checkboxes. */
-      const hideNativeRows = (parent, nativeButtons) => {
-        for (const button of nativeButtons) {
-          const sibling = siblingOf(button, parent);
-          if (sibling !== null && 'style' in sibling) sibling.style.display = 'none';
+      /**
+       * The direct children that belong to the section starting at `label`: the
+       * shipped menu keeps every section's label and items as siblings in one
+       * viewport, so a section ends at the next label or separator.
+       */
+      const sectionItems = (label) => {
+        const items = [];
+        let node = label.nextElementSibling;
+        while (node !== null) {
+          const isLabel = node.getAttribute('role') === 'presentation' && /label/i.test(String(node.className));
+          const isSeparator = /separator/i.test(String(node.className)) || node.getAttribute('role') === 'separator';
+          if (isLabel || isSeparator) break;
+          items.push(node);
+          node = node.nextElementSibling;
+        }
+        return items;
+      };
+
+      /** Hide the shipped filter rows only: other sections keep their items visible. */
+      const hideNativeRows = (items) => {
+        for (const item of items) {
+          if (item.hasAttribute(WRAP_ATTR) || item.hasAttribute(FILTER_ITEM_ATTR)) continue;
+          if (item.querySelector('[' + FILTER_ITEM_ATTR + ']') !== null) continue;
+          if ('style' in item) item.style.display = 'none';
         }
       };
 
@@ -624,8 +643,9 @@ window.__ModuleLoader__.load({
       };
 
       /**
-       * Replace the shipped rows with the two checkbox rows. Both are inserted right
-       * after the section label, in SHOW_TOKENS order.
+       * Replace the shipped filter rows with the two checkbox rows. Only the items
+       * between the section label and the next label/separator are touched, so the
+       * grouping and sorting buttons stay untouched.
        */
       const ensureFilterSection = () => {
         const section = visibleFilterSection();
@@ -639,13 +659,17 @@ window.__ModuleLoader__.load({
           (wrap ?? stale).remove();
           stale.remove();
         }
-        const nativeButtons = [...parent.querySelectorAll('button[role="menuitem"]')].filter(
-          (button) => !button.hasAttribute(FILTER_ITEM_ATTR),
-        );
+        const items = sectionItems(section);
+        const nativeButtons = items
+          .flatMap((item) => [
+            ...(item.matches('button[role="menuitem"]') ? [item] : []),
+            ...item.querySelectorAll('button[role="menuitem"]'),
+          ])
+          .filter((button) => !button.hasAttribute(FILTER_ITEM_ATTR) && !button.closest('[' + WRAP_ATTR + ']'));
         if (nativeButtons.length === 0) return;
         for (const button of nativeButtons) button.setAttribute(NATIVE_ATTR, '');
         resetShippedFilter(nativeButtons);
-        hideNativeRows(parent, nativeButtons);
+        hideNativeRows(items);
         let anchorNode = siblingOf(section, parent);
         for (const token of SHOW_TOKENS) {
           if (parent.querySelector(`[${ROW_ROLE_ATTR}="${token}"]`) === null) {

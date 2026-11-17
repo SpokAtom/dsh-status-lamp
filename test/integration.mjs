@@ -112,6 +112,22 @@ sectionLabel.textContent = '筛选会话';
 sectionLabel.__rect = { width: 200, height: 20, top: 100, left: 0, right: 200, bottom: 120 };
 menu.appendChild(sectionLabel);
 
+const groupLabel = window.document.createElement('div');
+groupLabel.setAttribute('role', 'presentation');
+groupLabel.className = '_label_hash';
+groupLabel.textContent = '分组方式';
+groupLabel.__rect = { width: 200, height: 20, top: 20, left: 0, right: 200, bottom: 40 };
+const groupWrapper = window.document.createElement('div');
+groupWrapper.className = 'itemWrap_hash';
+groupWrapper.__rect = { width: 200, height: 30, top: 50, left: 0, right: 200, bottom: 80 };
+const groupButton = window.document.createElement('button');
+groupButton.setAttribute('role', 'menuitem');
+groupButton.className = '_item_hash';
+groupButton.textContent = '按工作区';
+groupWrapper.appendChild(groupButton);
+menu.insertBefore(groupWrapper, sectionLabel);
+menu.insertBefore(groupLabel, groupWrapper);
+
 const nativeLabels = ['隐藏已归档', '全部对话', '仅显示已归档'];
 const nativeWrappers = [];
 const nativeButtons = nativeLabels.map((text, index) => {
@@ -174,6 +190,8 @@ assert.equal(
   'shipped filter rows must be hidden',
 );
 assert.equal(defaultClicks, 1, 'a persisted non-default shipped filter must be reset to all conversations');
+assert.equal(groupWrapper.style.display, '', 'earlier menu sections must stay visible');
+assert.equal(groupButton.isConnected, true, 'earlier menu buttons must stay in the DOM');
 const rowWrapper = (row) => row.closest('[data-status-lamp-filter-wrap]');
 assert.equal(sectionLabel.nextElementSibling, rowWrapper(holdRow), 'hold row must come first');
 assert.equal(rowWrapper(holdRow).nextElementSibling, rowWrapper(archivedRow), 'archived row must follow the hold row');
