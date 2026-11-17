@@ -26,6 +26,12 @@ DSH 对空闲会话的行首什么都不画，归档行的行首也是空白—�
 
 原生**待审批 / 进行中 / 未读**继续用 DSH 自己的灯；挂起不会盖住运行中的行，运行也会清掉挂起标记。
 
+## 状态机
+
+![状态机](docs/state-machine.png)
+
+完整迁移与条件见 [docs/STATE-MACHINE.md](docs/STATE-MACHINE.md)（Mermaid，GitHub 直接渲染）。静态图另有暗色版：`docs/state-machine-dark.png`。
+
 ## 判定顺序
 
 ```text

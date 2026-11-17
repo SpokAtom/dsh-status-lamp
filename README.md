@@ -26,6 +26,12 @@ An on-hold session is not running by definition. The moment it runs again — ne
 
 Native **pending / running / unread** keep their own lamps. Holding never covers a running row, and running clears the mark.
 
+## State machine
+
+![State machine](docs/state-machine-en.png)
+
+Every transition with its condition lives in [docs/STATE-MACHINE.md](docs/STATE-MACHINE.md) (Mermaid, rendered by GitHub). Static images: `docs/state-machine-en.png` (light), `docs/state-machine-en-dark.png` (dark).
+
 ## Decision order
 
 ```text
