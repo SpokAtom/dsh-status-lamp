@@ -6,24 +6,36 @@
 
 ```mermaid
 stateDiagram-v2
-    direction LR
+    direction TB
+
+    classDef idle fill:#e8f0fe,stroke:#2f6feb,stroke-width:1.5px,color:#1f2328
+    classDef hold fill:#fdf4e3,stroke:#d99a2b,stroke-width:1.5px,color:#1f2328
+    classDef archive fill:#eef0f3,stroke:#8b8f98,stroke-width:1.5px,color:#1f2328
+    classDef native fill:#f5f7fb,stroke:#8fa3c8,stroke-width:1.5px,color:#1f2328
 
     state "空闲（蓝点）" as Idle
     state "原生状态（运行 / 待审批 / 未读）" as Native
     state "已挂起（灰空心）" as OnHold
     state "已归档（灰实心）" as Archived
 
-    Idle --> Native: ①开始运行 / 待审批 / 未读
-    OnHold --> Native: ①同上（清挂起标记）
-    Native --> Idle: ②跑完无未读 / 已读 / 审批完成
-    Idle --> OnHold: ③挂起会话 或 最后活动≥5天
+    class Idle idle
+    class OnHold hold
+    class Archived archive
+    class Native native
+
+    Idle --> Native: ①运行/审批/未读
+    OnHold --> Native: ①同上（清标记）
+    Native --> Idle: ②跑完/已读/审批完成
+    Idle --> OnHold: ③挂起（手动或 ≥5 天）
     OnHold --> Idle: ④取消挂起
     Idle --> Archived: ⑤归档
-    OnHold --> Archived: ⑥归档（标记保留）
-    Archived --> Idle: ⑦解除归档 ∧ 无标记 ∧ <5天
-    Archived --> OnHold: ⑧解除归档 ∧（有标记 ∨ ≥5天）
-    Archived --> Native: ⑨解除归档时正在运行 / 待审批 / 未读
+    OnHold --> Archived: ⑥归档（保留标记）
+    Archived --> Idle: ⑦解除归档：无标记且 <5 天
+    Archived --> OnHold: ⑧解除归档：有标记或 ≥5 天
+    Archived --> Native: ⑨解除归档：运行中/未读
 ```
+
+颜色约定：蓝 = 空闲、琥珀 = 已挂起、灰 = 已归档、淡蓝灰 = 原生状态（插件不接管）。
 
 迁移条件：
 
@@ -49,24 +61,36 @@ stateDiagram-v2
 
 ```mermaid
 stateDiagram-v2
-    direction LR
+    direction TB
+
+    classDef idle fill:#e8f0fe,stroke:#2f6feb,stroke-width:1.5px,color:#1f2328
+    classDef hold fill:#fdf4e3,stroke:#d99a2b,stroke-width:1.5px,color:#1f2328
+    classDef archive fill:#eef0f3,stroke:#8b8f98,stroke-width:1.5px,color:#1f2328
+    classDef native fill:#f5f7fb,stroke:#8fa3c8,stroke-width:1.5px,color:#1f2328
 
     state "Idle (blue dot)" as Idle
     state "Native (running / pending / unread)" as Native
     state "On hold (hollow ring)" as OnHold
     state "Archived (solid dot)" as Archived
 
-    Idle --> Native: 1 starts running / needs approval / unread
-    OnHold --> Native: 1 same, clears the hold mark
-    Native --> Idle: 2 finished with no unread / read / approved
-    Idle --> OnHold: 3 Hold session or last activity >= 5 days
-    OnHold --> Idle: 4 Resume session
-    Idle --> Archived: 5 archive
-    OnHold --> Archived: 6 archive (mark kept, not shown)
-    Archived --> Idle: 7 unarchive AND no mark AND < 5 days
-    Archived --> OnHold: 8 unarchive AND (mark OR >= 5 days)
-    Archived --> Native: 9 unarchive while running / pending / unread
+    class Idle idle
+    class OnHold hold
+    class Archived archive
+    class Native native
+
+    Idle --> Native: 1 run / approval / unread
+    OnHold --> Native: 1 same, clears mark
+    Native --> Idle: 2 finished / read / approved
+    Idle --> OnHold: 3 Hold (manual or >= 5 days)
+    OnHold --> Idle: 4 Resume
+    Idle --> Archived: 5 Archive
+    OnHold --> Archived: 6 Archive (mark kept)
+    Archived --> Idle: 7 Unarchive: no mark and < 5 days
+    Archived --> OnHold: 8 Unarchive: mark or >= 5 days
+    Archived --> Native: 9 Unarchive: running / unread
 ```
+
+Colour key: blue = idle, amber = on hold, grey = archived, pale blue-grey = native states (the plugin stays out).
 
 Static images (same geometry, two languages and two themes):
 
