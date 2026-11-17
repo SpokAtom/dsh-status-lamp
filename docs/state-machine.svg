@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="1000" viewBox="0 0 1240 1000" font-family="Microsoft YaHei, Segoe UI, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1080" viewBox="0 0 1000 1080" font-family="Microsoft YaHei, Segoe UI, sans-serif">
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a5568"/>
@@ -11,88 +11,100 @@
     </marker>
   </defs>
 
-  <rect width="1240" height="1000" fill="#ffffff"/>
-  <text x="40" y="52" font-size="26" font-weight="600" fill="#1f2328">dsh-status-lamp 状态机</text>
-  <text x="40" y="82" font-size="14" fill="#6b7280">插件只叠加「空闲 / 已挂起 / 已归档」三种灯；待审批、进行中、未读完成沿用 DSH 原生灯</text>
+  <rect width="1000" height="1080" fill="#ffffff"/>
+  <text x="36" y="46" font-size="24" font-weight="600" fill="#1f2328">dsh-status-lamp 状态机（闭环）</text>
+  <text x="36" y="74" font-size="13" fill="#6b7280">状态：空闲 / 已挂起 / 已归档 + 原生三态；每条边都标了触发条件</text>
 
   <!-- native group -->
-  <rect x="470" y="120" width="430" height="146" rx="14" fill="#f7f8fa" stroke="#d7dbe2"/>
-  <text x="490" y="148" font-size="15" font-weight="600" fill="#374151">原生状态（插件让位，不改动）</text>
-  <rect x="490" y="164" width="118" height="42" rx="10" fill="#fff" stroke="#d7dbe2"/>
-  <text x="549" y="191" font-size="15" text-anchor="middle" fill="#374151">待审批</text>
-  <rect x="622" y="164" width="118" height="42" rx="10" fill="#fff" stroke="#d7dbe2"/>
-  <text x="681" y="191" font-size="15" text-anchor="middle" fill="#374151">进行中</text>
-  <rect x="754" y="164" width="118" height="42" rx="10" fill="#fff" stroke="#d7dbe2"/>
-  <text x="813" y="191" font-size="15" text-anchor="middle" fill="#374151">未读完成</text>
-  <text x="490" y="240" font-size="13" fill="#8a8f98">这三种状态下挂起环不覆盖原生灯</text>
+  <rect x="270" y="100" width="460" height="170" rx="14" fill="#f7f8fa" stroke="#d7dbe2"/>
+  <text x="290" y="128" font-size="15" font-weight="600" fill="#374151">原生状态（插件让位，不改动）</text>
+  <rect x="290" y="144" width="130" height="44" rx="10" fill="#fff" stroke="#d7dbe2"/>
+  <text x="355" y="172" font-size="14" text-anchor="middle" fill="#374151">运行中</text>
+  <rect x="435" y="144" width="130" height="44" rx="10" fill="#fff" stroke="#d7dbe2"/>
+  <text x="500" y="172" font-size="14" text-anchor="middle" fill="#374151">待审批</text>
+  <rect x="580" y="144" width="130" height="44" rx="10" fill="#fff" stroke="#d7dbe2"/>
+  <text x="645" y="172" font-size="14" text-anchor="middle" fill="#374151">未读完成</text>
+  <text x="290" y="222" font-size="12" fill="#8a8f98">挂起环不覆盖这三种状态；进入运行会清除挂起标记</text>
 
   <!-- idle -->
-  <rect x="120" y="350" width="210" height="96" rx="14" fill="#fff" stroke="#c9d7f5"/>
-  <circle cx="160" cy="398" r="9" fill="#2f6feb"/>
-  <text x="182" y="392" font-size="17" font-weight="600" fill="#1f2328">空闲</text>
-  <text x="182" y="414" font-size="13" fill="#6b7280">Idle · 蓝点</text>
+  <rect x="120" y="400" width="210" height="96" rx="14" fill="#fff" stroke="#c9d7f5"/>
+  <circle cx="160" cy="448" r="9" fill="#2f6feb"/>
+  <text x="182" y="442" font-size="17" font-weight="600" fill="#1f2328">空闲</text>
+  <text x="182" y="464" font-size="13" fill="#6b7280">Idle · 蓝点</text>
 
   <!-- on hold -->
-  <rect x="120" y="600" width="210" height="96" rx="14" fill="#fff" stroke="#d7dbe2"/>
-  <circle cx="160" cy="648" r="8" fill="none" stroke="#a3a3a3" stroke-width="3"/>
-  <text x="182" y="642" font-size="17" font-weight="600" fill="#1f2328">已挂起</text>
-  <text x="182" y="664" font-size="13" fill="#6b7280">On hold · 灰空心环</text>
+  <rect x="670" y="400" width="210" height="96" rx="14" fill="#fff" stroke="#d7dbe2"/>
+  <circle cx="710" cy="448" r="8" fill="none" stroke="#a3a3a3" stroke-width="3"/>
+  <text x="732" y="442" font-size="17" font-weight="600" fill="#1f2328">已挂起</text>
+  <text x="732" y="464" font-size="13" fill="#6b7280">On hold · 灰空心环</text>
 
   <!-- archived -->
-  <rect x="930" y="350" width="220" height="96" rx="14" fill="#fff" stroke="#d7dbe2"/>
-  <circle cx="970" cy="398" r="9" fill="#a3a3a3"/>
-  <text x="992" y="392" font-size="17" font-weight="600" fill="#1f2328">已归档</text>
-  <text x="992" y="414" font-size="13" fill="#6b7280">Archived · 灰实心点</text>
-  <text x="938" y="472" font-size="12" fill="#8a8f98">归档行行首由 DSH 留空，灯画在时间左侧</text>
+  <rect x="395" y="720" width="210" height="96" rx="14" fill="#fff" stroke="#d7dbe2"/>
+  <circle cx="435" cy="768" r="9" fill="#a3a3a3"/>
+  <text x="457" y="762" font-size="17" font-weight="600" fill="#1f2328">已归档</text>
+  <text x="457" y="784" font-size="13" fill="#6b7280">Archived · 灰实心点</text>
 
   <!-- 1 idle -> native -->
-  <path d="M 330 372 C 390 330 430 300 470 274" fill="none" stroke="#2f6feb" stroke-width="2" marker-end="url(#b)"/>
-  <circle cx="392" cy="304" r="13" fill="#2f6feb"/>
-  <text x="392" y="309" font-size="13" text-anchor="middle" fill="#fff">1</text>
+  <path d="M 225 400 C 250 340 300 300 340 272" fill="none" stroke="#2f6feb" stroke-width="2" marker-end="url(#b)"/>
+  <circle cx="286" cy="336" r="12" fill="#2f6feb"/>
+  <text x="286" y="341" font-size="12" text-anchor="middle" fill="#fff">1</text>
 
-  <!-- 2 native -> idle -->
-  <path d="M 610 266 C 560 330 470 386 340 414" fill="none" stroke="#2f6feb" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#b)"/>
-  <circle cx="520" cy="344" r="13" fill="#2f6feb"/>
-  <text x="520" y="349" font-size="13" text-anchor="middle" fill="#fff">2</text>
+  <!-- 2 hold -> native -->
+  <path d="M 775 400 C 750 340 700 300 660 272" fill="none" stroke="#2f6feb" stroke-width="2" marker-end="url(#b)"/>
+  <circle cx="714" cy="336" r="12" fill="#2f6feb"/>
+  <text x="714" y="341" font-size="12" text-anchor="middle" fill="#fff">2</text>
 
-  <!-- 3 idle -> hold -->
-  <path d="M 200 446 L 200 600" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#a)"/>
-  <circle cx="175" cy="520" r="13" fill="#4a5568"/>
-  <text x="175" y="525" font-size="13" text-anchor="middle" fill="#fff">3</text>
+  <!-- 3 native -> idle -->
+  <path d="M 270 210 C 200 250 172 330 172 394" fill="none" stroke="#2f6feb" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#b)"/>
+  <circle cx="188" cy="318" r="12" fill="#2f6feb"/>
+  <text x="188" y="323" font-size="12" text-anchor="middle" fill="#fff">3</text>
 
-  <!-- 4 hold -> idle -->
-  <path d="M 300 600 L 300 446" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#a)"/>
-  <circle cx="325" cy="530" r="13" fill="#4a5568"/>
-  <text x="325" y="535" font-size="13" text-anchor="middle" fill="#fff">4</text>
+  <!-- 4 idle -> hold -->
+  <path d="M 330 434 L 670 434" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#a)"/>
+  <circle cx="420" cy="434" r="12" fill="#4a5568"/>
+  <text x="420" y="439" font-size="12" text-anchor="middle" fill="#fff">4</text>
 
-  <!-- 5 idle -> archived -->
-  <path d="M 330 398 L 930 398" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#a)"/>
-  <circle cx="630" cy="398" r="13" fill="#4a5568"/>
-  <text x="630" y="403" font-size="13" text-anchor="middle" fill="#fff">5</text>
+  <!-- 5 hold -> idle -->
+  <path d="M 670 466 L 330 466" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#a)"/>
+  <circle cx="580" cy="466" r="12" fill="#4a5568"/>
+  <text x="580" y="471" font-size="12" text-anchor="middle" fill="#fff">5</text>
 
-  <!-- 6 archived -> terminal -->
-  <path d="M 1040 446 C 1040 560 980 610 930 640" fill="none" stroke="#8a8f98" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#g)"/>
-  <circle cx="1012" cy="556" r="13" fill="#8a8f98"/>
-  <text x="1012" y="561" font-size="13" text-anchor="middle" fill="#fff">6</text>
+  <!-- 6 idle -> archived -->
+  <path d="M 200 496 C 250 600 330 670 420 716" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#a)"/>
+  <circle cx="316" cy="624" r="12" fill="#4a5568"/>
+  <text x="316" y="629" font-size="12" text-anchor="middle" fill="#fff">6</text>
 
-  <!-- terminal: after unarchive -->
-  <rect x="520" y="600" width="420" height="240" rx="14" fill="#fbfbfc" stroke="#d7dbe2"/>
-  <text x="542" y="630" font-size="15" font-weight="600" fill="#1f2328">解除归档后 → 按规则重新判定</text>
-  <text x="542" y="662" font-size="14" fill="#374151">· 有手动挂起标记 → 已挂起</text>
-  <text x="542" y="690" font-size="14" fill="#374151">· 否则最后活动 ≥ 5 天 → 自动挂起</text>
-  <text x="542" y="718" font-size="14" fill="#374151">· 否则 → 空闲（蓝点）</text>
-  <text x="542" y="746" font-size="14" fill="#374151">· 正在运行 / 待审批 / 未读 → 原生灯</text>
-  <text x="542" y="782" font-size="12" fill="#8a8f98">归档不会清除手动挂起标记，也不参与自动挂起计算；</text>
-  <text x="542" y="804" font-size="12" fill="#8a8f98">因此解除归档后可能直接回到「已挂起」。</text>
+  <!-- 7 hold -> archived -->
+  <path d="M 800 496 C 750 600 670 670 580 716" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#a)"/>
+  <circle cx="684" cy="624" r="12" fill="#4a5568"/>
+  <text x="684" y="629" font-size="12" text-anchor="middle" fill="#fff">7</text>
+
+  <!-- 8 archived -> idle -->
+  <path d="M 395 790 C 240 830 120 720 158 500" fill="none" stroke="#8a8f98" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#g)"/>
+  <circle cx="196" cy="700" r="12" fill="#8a8f98"/>
+  <text x="196" y="705" font-size="12" text-anchor="middle" fill="#fff">8</text>
+
+  <!-- 9 archived -> hold -->
+  <path d="M 605 790 C 760 830 880 720 842 500" fill="none" stroke="#8a8f98" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#g)"/>
+  <circle cx="804" cy="700" r="12" fill="#8a8f98"/>
+  <text x="804" y="705" font-size="12" text-anchor="middle" fill="#fff">9</text>
+
+  <!-- 10 archived -> native -->
+  <path d="M 520 720 L 520 272" fill="none" stroke="#8a8f98" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#g)"/>
+  <circle cx="520" cy="600" r="12" fill="#8a8f98"/>
+  <text x="520" y="605" font-size="12" text-anchor="middle" fill="#fff">10</text>
 
   <!-- legend -->
-  <rect x="40" y="740" width="470" height="236" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
-  <text x="62" y="772" font-size="15" font-weight="600" fill="#1f2328">迁移说明</text>
-  <text x="62" y="804" font-size="13" fill="#374151">① 开始运行 / 待审批 / 未读出现 → 原生灯接管，挂起标记清除</text>
-  <text x="62" y="830" font-size="13" fill="#374151">② 原生状态结束（跑完且无未读）→ 回到空闲</text>
-  <text x="62" y="856" font-size="13" fill="#374151">③ 「挂起会话」，或最后活动 ≥ 5 天（自动）→ 已挂起</text>
-  <text x="62" y="882" font-size="13" fill="#374151">④ 「取消挂起」，或会话开始运行 → 回到空闲</text>
-  <text x="62" y="908" font-size="13" fill="#374151">⑤ 归档（会话行菜单）→ 已归档</text>
-  <text x="62" y="934" font-size="13" fill="#374151">⑥ 解除归档 → 见右侧判定，不是固定回到某一个状态</text>
-  <text x="62" y="962" font-size="12" fill="#8a8f98">判定顺序：原生四态 &gt; 已挂起 &gt; 空闲；归档态独立展示</text>
+  <rect x="30" y="860" width="940" height="196" rx="12" fill="#fbfbfc" stroke="#e5e7eb"/>
+  <text x="50" y="888" font-size="14" font-weight="600" fill="#1f2328">迁移条件</text>
+  <text x="50" y="916" font-size="12.5" fill="#374151">1 空闲 → 原生：开始运行 / 需要审批 / 出现未读结果（挂起标记被清除）</text>
+  <text x="50" y="940" font-size="12.5" fill="#374151">2 已挂起 → 原生：同上；挂起标记在运行开始时自动清除</text>
+  <text x="50" y="964" font-size="12.5" fill="#374151">3 原生 → 空闲：跑完且无未读 / 未读已查看 / 审批已完成</text>
+  <text x="50" y="988" font-size="12.5" fill="#374151">4 空闲 → 已挂起：菜单「挂起会话」，或最后活动 ≥ 5 天（自动）</text>
+  <text x="50" y="1012" font-size="12.5" fill="#374151">5 已挂起 → 空闲：菜单「取消挂起」</text>
+  <text x="530" y="916" font-size="12.5" fill="#374151">6 空闲 → 已归档：会话菜单「归档」</text>
+  <text x="530" y="940" font-size="12.5" fill="#374151">7 已挂起 → 已归档：会话菜单「归档」（标记保留但不显示）</text>
+  <text x="530" y="964" font-size="12.5" fill="#374151">8 已归档 → 空闲：解除归档 ∧ 无手动标记 ∧ 最后活动 &lt; 5 天</text>
+  <text x="530" y="988" font-size="12.5" fill="#374151">9 已归档 → 已挂起：解除归档 ∧（有手动标记 ∨ 最后活动 ≥ 5 天）</text>
+  <text x="530" y="1012" font-size="12.5" fill="#374151">10 已归档 → 原生：解除归档时正处于运行/待审批/未读</text>
 </svg>
