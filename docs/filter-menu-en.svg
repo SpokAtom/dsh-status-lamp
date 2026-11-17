@@ -1,25 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="680" height="232" viewBox="0 0 680 232" font-family="Segoe UI, Microsoft YaHei, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="284" viewBox="0 0 680 284" font-family="Segoe UI, Microsoft YaHei, sans-serif">
   <defs>
     <filter id="sh" x="-10%" y="-10%" width="120%" height="120%">
       <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000" flood-opacity="0.08"/>
     </filter>
   </defs>
-  <rect x="10" y="10" width="660" height="212" rx="14" fill="#fbfbfd" stroke="#dfe3ea" filter="url(#sh)"/>
-  <text x="40" y="48" font-size="14" fill="#6b7280">Filter sessions</text>
-
-  <rect x="24" y="70" width="632" height="58" rx="10" fill="#eef2ff" stroke="#2f6feb" stroke-width="1.5"/>
-  <g stroke="#5a6472" stroke-width="2" fill="none">
-    <ellipse cx="58" cy="99" rx="12" ry="7"/>
-    <circle cx="58" cy="99" r="3" fill="#5a6472" stroke="none"/>
-    <line x1="50" y1="106" x2="66" y2="92"/>
-  </g>
-  <text x="88" y="105" font-size="17" fill="#1f2328">Hide archived and on hold</text>
-
+  <rect x="10" y="10" width="660" height="264" rx="14" fill="#fbfbfd" stroke="#dfe3ea" filter="url(#sh)"/>
+  <text x="36" y="42" font-size="14" fill="#6b7280">Filter sessions</text>
+  <rect x="20" y="60" width="640" height="46" rx="9" fill="#eef2ff" stroke="#2f6feb" stroke-width="1.5"/><g stroke="#5a6472" stroke-width="2" fill="none">
+    <ellipse cx="58" cy="83" rx="12" ry="7"/><circle cx="58" cy="83" r="3" fill="#5a6472" stroke="none"/>
+    <line x1="50" y1="77" x2="66" y2="89"/></g>
+  <text x="88" y="89" font-size="17" fill="#1f2328">Hide archived and on hold</text><text x="618" y="89" font-size="12" fill="#6b7280" text-anchor="end">↑ new</text>
   <g stroke="#8a909a" stroke-width="2" fill="none">
-    <rect x="50" y="160" width="16" height="11" rx="2"/>
-    <path d="M50 163 L58 158 L66 163"/>
-  </g>
-  <text x="88" y="172" font-size="17" fill="#1f2328">Hide archived</text>
-
-  <text x="560" y="105" font-size="13" fill="#6b7280">↑ new item</text>
+    <rect x="48" y="129" width="20" height="13" rx="2"/><path d="M48 141 L58 127 L68 141"/></g>
+  <text x="88" y="141" font-size="17" fill="#1f2328">Hide archived</text>
+  <g stroke="#8a909a" stroke-width="2" fill="none">
+    <rect x="47" y="179" width="24" height="16" rx="4"/><path d="M52 193 L52 193 L60 193"/></g>
+  <text x="88" y="193" font-size="17" fill="#1f2328">All conversations</text><text x="618" y="193" font-size="12" fill="#6b7280" text-anchor="end">parenthesis removed</text>
+  <rect x="20" y="216" width="640" height="46" rx="9" fill="#eef2ff" stroke="#2f6feb" stroke-width="1.5"/><g stroke="#8a909a" stroke-width="2" fill="none">
+    <circle cx="58" cy="239" r="9"/><circle cx="58" cy="239" r="3" fill="#8a909a" stroke="none"/></g>
+  <text x="88" y="245" font-size="17" fill="#1f2328">Show only on hold</text><text x="618" y="245" font-size="12" fill="#6b7280" text-anchor="end">new</text>
 </svg>

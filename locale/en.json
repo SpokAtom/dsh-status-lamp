@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Status light",
-    "description": "Sidebar session-row status light (status indicator): blue idle, hollow grey on hold (manual or after 5 quiet days, released when it runs), solid grey archived; hide archived and on-hold sessions in the view-options menu. Native pending/running/unread lamps stay as-is."
+    "description": "Sidebar session-row status light (status indicator): blue idle, hollow grey on hold (manual or after 5 quiet days, released when it runs), solid grey archived; from View options → Filter sessions you can hide archived and on-hold rows, or show on-hold sessions only. Native pending/running/unread lamps stay as-is."
   }
 }
