@@ -355,10 +355,6 @@ window.__ModuleLoader__.load({
     }
 
     const normalizeFilterMode = (raw) => (FILTER_MODES.includes(raw) ? raw : 'show');
-    /** Next mode when the "hide archived and on hold" toggle is used. */
-    const nextHideMode = (mode) => (mode === 'hide' ? 'show' : 'hide');
-    /** Next mode when the "show only on hold" row is used. */
-    const nextHoldOnlyMode = (mode) => (mode === 'hold' ? 'show' : 'hold');
     /** Drop a trailing parenthetical shipped with a label, e.g. 全部对话（显示已归档） → 全部对话. */
     const stripParenthetical = (text) => text.replace(/\s*[（(][^（()）]*[)）]\s*$/u, '').trim();
 
@@ -488,18 +484,53 @@ window.__ModuleLoader__.load({
         if (labelHost !== null && labelHost.textContent !== label) labelHost.textContent = label;
       };
 
+      /** Selected class names captured from the shipped row our row was cloned from. */
+      const selectedClassesOf = (row) => {
+        try {
+          const raw = row.dataset.statusLampSelectedClasses;
+          return raw === undefined ? [] : JSON.parse(raw);
+        } catch {
+          return [];
+        }
+      };
+
       /** Repaint both injected rows from the current mode. */
       const refreshFilterRows = () => {
         refreshRow('hide-toggle', hideLabel(), hideTip(), filterMode === 'hide' ? EYE_OFF : EYE_ON);
         refreshRow('hold-only', holdOnlyLabel(), holdOnlyTip(), HOLD_ONLY_ICON);
       };
 
-      /** Shipped filter rows carry selected paint; keep our own rows' checked state exact. */
+      /**
+       * The five filter rows behave as one radio group: exactly one looks selected.
+       * Our rows borrow the shipped selected paint while active; while one of ours
+       * is active the shipped rows must stop looking selected.
+       */
       const refreshMenuItemState = () => {
-        const selected = filterMode !== 'show';
         for (const row of document.querySelectorAll('[' + FILTER_ITEM_ATTR + ']')) {
-          const checked = selected && row.getAttribute(ROW_ROLE_ATTR) === 'hide-toggle' ? 'true' : 'false';
+          const role = row.getAttribute(ROW_ROLE_ATTR);
+          const active = (role === 'hide-toggle' && filterMode === 'hide') || (role === 'hold-only' && filterMode === 'hold');
+          for (const name of selectedClassesOf(row)) row.classList.toggle(name, active);
+          for (const check of row.querySelectorAll('[class*="_check"]')) check.style.display = active ? '' : 'none';
+          const checked = active ? 'true' : 'false';
           if (row.getAttribute('aria-checked') !== checked) row.setAttribute('aria-checked', checked);
+        }
+        const section = visibleFilterSection();
+        const parent = section === null ? null : section.parentElement;
+        if (parent === null) return;
+        for (const button of parent.querySelectorAll('button[role="menuitem"]')) {
+          if (button.hasAttribute(FILTER_ITEM_ATTR)) continue;
+          if (filterMode === 'show') {
+            // Hand selection back to the shipped radio group.
+            const saved = button.dataset.statusLampStrippedSelected;
+            if (saved === undefined) continue;
+            for (const name of JSON.parse(saved)) button.classList.add(name);
+            delete button.dataset.statusLampStrippedSelected;
+            continue;
+          }
+          const selectedClasses = [...button.classList].filter((name) => /_selected/.test(name));
+          if (selectedClasses.length === 0) continue;
+          button.dataset.statusLampStrippedSelected = JSON.stringify(selectedClasses);
+          for (const name of selectedClasses) button.classList.remove(name);
         }
       };
 
@@ -520,6 +551,8 @@ window.__ModuleLoader__.load({
           if (/_check/i.test(String(element.className))) element.style.display = 'none';
         }
         const row = wrapper === null ? node : node.querySelector('button[role="menuitem"]') ?? node;
+        const selectedClasses = [...anchor.classList].filter((name) => /_selected/.test(name));
+        if (selectedClasses.length > 0) row.dataset.statusLampSelectedClasses = JSON.stringify(selectedClasses);
         for (const name of [
           'id',
           'aria-haspopup',
@@ -681,6 +714,7 @@ window.__ModuleLoader__.load({
        * One capture-phase click handler for every row: it survives React replacing
        * the cloned nodes, which per-node listeners did not.
        */
+      let applyingDefault = false;
       const onDocumentClick = (event) => {
         const target = event.target;
         if (!(target instanceof Element)) return;
@@ -689,12 +723,35 @@ window.__ModuleLoader__.load({
           event.preventDefault();
           event.stopPropagation();
           const role = ownRow.getAttribute(ROW_ROLE_ATTR);
-          setFilterMode(role === 'hold-only' ? nextHoldOnlyMode(filterMode) : nextHideMode(filterMode));
+          const targetMode = role === 'hold-only' ? 'hold' : 'hide';
+          // Radio group: clicking the already selected option changes nothing.
+          if (filterMode === targetMode) return;
+          const section = visibleFilterSection();
+          const parent = section === null ? null : section.parentElement;
+          const shipped =
+            parent === null
+              ? []
+              : [...parent.querySelectorAll('button[role="menuitem"]')].filter(
+                  (button) => !button.hasAttribute(FILTER_ITEM_ATTR),
+                );
+          // Shipped order is hide archived, all conversations, only archived. Pick
+          // "all conversations" so our mode replaces the shipped filter rather than
+          // stacking with it, keeping the five options mutually exclusive.
+          const defaultRow = shipped[1] ?? null;
+          if (defaultRow !== null) {
+            applyingDefault = true;
+            try {
+              defaultRow.click();
+            } finally {
+              applyingDefault = false;
+            }
+          }
+          setFilterMode(targetMode);
           return;
         }
         const nativeRow = target.closest('button[' + NATIVE_ATTR + ']');
-        if (nativeRow !== null && !nativeRow.hasAttribute(FILTER_ITEM_ATTR) && filterMode !== 'show') {
-          // A shipped filter wins: clear the plugin's own mode so they cannot stack.
+        if (nativeRow !== null && !nativeRow.hasAttribute(FILTER_ITEM_ATTR) && !applyingDefault && filterMode !== 'show') {
+          // A shipped filter wins: hand the radio group back to DSH.
           setFilterMode('show');
         }
       };
@@ -779,7 +836,7 @@ window.__ModuleLoader__.load({
       inject,
       apply,
       /** Pure helpers exposed for the smoke test; no behaviour depends on them. */
-      __test: { readFilterMode, normalizeFilterMode, nextHideMode, nextHoldOnlyMode, stripParenthetical },
+      __test: { readFilterMode, normalizeFilterMode, stripParenthetical },
     };
   },
 });

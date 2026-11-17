@@ -139,6 +139,7 @@ const nativeButtons = nativeLabels.map((text, index) => {
   return button;
 });
 window.document.body.appendChild(menu);
+nativeButtons[0].classList.add('_selected_hash');
 
 const rows = () => [...window.document.querySelectorAll('[data-status-lamp-filter-item]')];
 const waitFor = async (predicate, timeout = 1500) => {
@@ -169,18 +170,37 @@ assert.equal(nativeButtons[1].textContent.trim(), '全部对话', 'native label 
 
 // Click the hide toggle: the stylesheet attribute and storage must follow.
 const click = (element) => element.dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+let defaultClicks = 0;
+nativeButtons[1].addEventListener('click', () => {
+  defaultClicks += 1;
+});
+
 click(hideRow);
 assert.equal(window.document.documentElement.getAttribute('data-status-lamp-filter'), 'hide');
 assert.equal(window.localStorage.getItem('dsh.status-lamp.filter.v1'), 'hide');
+// The five options are one radio group: picking ours first resets the shipped one.
+assert.equal(defaultClicks, 1, 'selecting a plugin row must reset the shipped filter');
+assert.equal(nativeButtons[0].classList.contains('_selected_hash'), false, 'shipped selection must be cleared');
+assert.equal(hideRow.classList.contains('_selected_hash'), true, 'our active row must borrow the selected paint');
+assert.equal(hideRow.getAttribute('aria-checked'), 'true');
+
+// Clicking the already selected option is a no-op (radio, not toggle).
+click(hideRow);
+assert.equal(window.document.documentElement.getAttribute('data-status-lamp-filter'), 'hide');
+assert.equal(defaultClicks, 1, 're-clicking the active row must not fire the shipped filter again');
 
 // Click the on-hold-only row: it replaces the mode, not stacks on it.
 click(holdRow);
 assert.equal(window.document.documentElement.getAttribute('data-status-lamp-filter'), 'hold');
 assert.equal(window.localStorage.getItem('dsh.status-lamp.filter.v1'), 'hold');
+assert.equal(hideRow.classList.contains('_selected_hash'), false, 'only one row may look selected');
+assert.equal(holdRow.classList.contains('_selected_hash'), true, 'on-hold-only row must look selected');
 
 // Choosing a shipped filter clears the plugin mode so the two never stack.
 click(nativeButtons[2]);
 assert.equal(window.document.documentElement.getAttribute('data-status-lamp-filter'), 'show');
+assert.equal(holdRow.classList.contains('_selected_hash'), false);
+assert.equal(nativeButtons[0].classList.contains('_selected_hash'), true, 'shipped selection must be restored');
 
 // A React-style re-render can drop the injected rows while the menu stays open.
 rows().forEach((row) => row.remove());
