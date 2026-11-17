@@ -40,12 +40,10 @@ window.__ModuleLoader__.load({
       'state.archived': '已归档',
       'menu.hold': '挂起会话',
       'menu.resume': '取消挂起',
-      'filter.label': '隐藏已归档及挂起',
-      'filter.tip.on': '已开启：点击显示归档和挂起的会话',
-      'filter.tip.off': '已关闭：点击隐藏归档和挂起的会话',
-      'filter.holdOnly': '仅显示已挂起',
-      'filter.holdOnly.on': '已开启：只显示挂起的会话，再点一次恢复',
-      'filter.holdOnly.off': '只显示挂起的会话',
+      'filter.hold': '已挂起',
+      'filter.hold.tip': '勾选显示已挂起的会话；不勾选则隐藏',
+      'filter.archived': '已归档',
+      'filter.archived.tip': '勾选显示已归档的会话；不勾选则隐藏',
     };
     const en = {
       'state.idle': 'Idle',
@@ -54,12 +52,10 @@ window.__ModuleLoader__.load({
       'state.archived': 'Archived',
       'menu.hold': 'Hold session',
       'menu.resume': 'Resume session',
-      'filter.label': 'Hide archived and on hold',
-      'filter.tip.on': 'On — click to show archived and on-hold sessions',
-      'filter.tip.off': 'Off — click to hide archived and on-hold sessions',
-      'filter.holdOnly': 'Show only on hold',
-      'filter.holdOnly.on': 'On — showing on-hold sessions only; click to restore',
-      'filter.holdOnly.off': 'Show on-hold sessions only',
+      'filter.hold': 'On hold',
+      'filter.hold.tip': 'Checked: show on-hold sessions; unchecked: hide them',
+      'filter.archived': 'Archived',
+      'filter.archived.tip': 'Checked: show archived sessions; unchecked: hide them',
     };
 
     // ---------------------------------------------------------------- store --
@@ -317,52 +313,69 @@ window.__ModuleLoader__.load({
 
     // -------------------------------------------------------------- filter --
     // The view-options dropdown belongs to ui-workspace and exposes no slot, so
-    // this is a DOM-level enhancement: every time that menu opens, one extra row
-    // is cloned from a shipped item and inserted at its top. The row toggles a
-    // stylesheet rule that hides on-hold and archived session rows. Everything
-    // fails open — no menu found, no rule matched, no hiding — and the shipped UI
-    // keeps working unchanged.
-    const FILTER_KEY = 'dsh.status-lamp.filter.v1';
-    const FILTER_ATTR = 'data-status-lamp-filter';
+    // this is a DOM-level enhancement: every time that menu opens, the shipped
+    // filter rows are hidden and replaced by two multi-select rows — `hold` and
+    // `archived`. Neither checked means only the remaining sessions are shown;
+    // each checked token adds that group back. Everything fails open.
+    const FILTER_KEY = 'dsh.status-lamp.show.v1';
+    /** Pre-release key from the previous single-choice design, migrated on read. */
+    const LEGACY_FILTER_KEY = 'dsh.status-lamp.filter.v1';
+    const FILTER_ATTR = 'data-status-lamp-show';
     /** The shipped menu's CSS-module class suffix; the hash prefix may change. */
     const FILTER_MENU_SELECTOR = '[class*="viewOptionsMenu"]';
     const FILTER_ITEM_ATTR = 'data-status-lamp-filter-item';
     const FILTER_STYLE_ID = 'dsh-status-lamp-filter-css';
-    const EYE_ON =
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12c1.4-4.1 4.7-7 9-7s7.6 2.9 9 7c-1.4 4.1-4.7 7-9 7s-7.6-2.9-9-7Z"/><circle cx="12" cy="12" r="2.6"/></svg>';
-    const EYE_OFF =
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 5 14 14"/><path d="M9.9 5.2A9.6 9.6 0 0 1 12 5c4.3 0 7.6 2.9 9 7a11.6 11.6 0 0 1-2.4 3.5"/><path d="M5.4 7.4A11.8 11.8 0 0 0 3 12c1.4 4.1 4.7 7 9 7 1.1 0 2.1-.2 3.1-.6"/><path d="M10.5 10.5a2.1 2.1 0 0 0 3 3"/></svg>';
-    const HOLD_ONLY_ICON =
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.6"/></svg>';
+    const SHOW_TOKENS = ['hold', 'archived'];
+    const HOLD_ICON =
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/></svg>';
+    const ARCHIVED_ICON =
+      '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/></svg>';
+    /**
+     * Neither token present hides the matching rows. The attribute is always set
+     * (possibly empty), and `[attr~="token"]` treats "hold archived" as two tokens.
+     */
     const FILTER_CSS = [
-      `html[${FILTER_ATTR}="hide"] [data-row-key^="session:"][class*="_archived"],`,
-      `html[${FILTER_ATTR}="hide"] [data-row-key^="session:"]:has([data-status-lamp="hold"]),`,
-      `html[${FILTER_ATTR}="hide"] [data-row-key^="session:"]:has([data-status-lamp="hold-auto"]){display:none !important}`,
-      `html[${FILTER_ATTR}="hold"] [data-row-key^="session:"]:not(:has([data-status-lamp="hold"])):not(:has([data-status-lamp="hold-auto"])){display:none !important}`,
+      `html:not([${FILTER_ATTR}~="archived"]) [data-row-key^="session:"][class*="_archived"]{display:none !important}`,
+      `html:not([${FILTER_ATTR}~="hold"]) [data-row-key^="session:"]:has([data-status-lamp="hold"]){display:none !important}`,
+      `html:not([${FILTER_ATTR}~="hold"]) [data-row-key^="session:"]:has([data-status-lamp="hold-auto"]){display:none !important}`,
     ].join('');
 
-    /** Supported view modes: default, hide archived+on-hold, or only on-hold rows. */
-    const FILTER_MODES = ['show', 'hide', 'hold'];
-
-    /** Read the persisted view mode, falling back to the default. */
-    function readFilterMode() {
+    /** Read the persisted set of extra groups to show ('hold' and/or 'archived'). */
+    function readShowSet() {
       try {
         const raw = window.localStorage.getItem(FILTER_KEY);
-        return FILTER_MODES.includes(raw) ? raw : 'show';
+        if (raw === null) {
+          // Migrate the pre-release single-choice value instead of losing it.
+          const legacy = window.localStorage.getItem(LEGACY_FILTER_KEY);
+          if (legacy === 'show') return new Set(SHOW_TOKENS);
+          if (legacy === 'hold') return new Set(['hold']);
+          return new Set();
+        }
+        const parsed = JSON.parse(raw);
+        return new Set(
+          Array.isArray(parsed) ? parsed.filter((token) => SHOW_TOKENS.includes(token)) : [],
+        );
       } catch {
-        return 'show';
+        return new Set();
       }
     }
 
-    const normalizeFilterMode = (raw) => (FILTER_MODES.includes(raw) ? raw : 'show');
-    /** Drop a trailing parenthetical shipped with a label, e.g. 全部对话（显示已归档） → 全部对话. */
-    const stripParenthetical = (text) => text.replace(/\s*[（(][^（()）]*[)）]\s*$/u, '').trim();
+    /** Toggle one group in the show set, returning a new set. */
+    const toggleShowToken = (set, token) => {
+      const next = new Set(set);
+      if (next.has(token)) next.delete(token);
+      else next.add(token);
+      return next;
+    };
 
-    let filterMode = readFilterMode();
+    /** Space-separated attribute value, stable order so CSS and tests can rely on it. */
+    const showAttrValue = (set) => SHOW_TOKENS.filter((token) => set.has(token)).join(' ');
 
-    /** Mirror the stored mode onto the root element; the stylesheet keys off it. */
+    let showSet = readShowSet();
+
+    /** Mirror the show set onto the root element; the stylesheet keys off it. */
     function applyFilterAttribute() {
-      document.documentElement.setAttribute(FILTER_ATTR, filterMode);
+      document.documentElement.setAttribute(FILTER_ATTR, showAttrValue(showSet));
     }
 
     const inject = ['slots', 'locale', 'contextMenus', 'sessions'];
@@ -447,19 +460,20 @@ window.__ModuleLoader__.load({
       // ---- view-options filter rows (DOM-level, see the constants above) ----
       const ROW_ROLE_ATTR = 'data-status-lamp-filter-role';
       const NATIVE_ATTR = 'data-status-lamp-native-filter';
-      const hideLabel = () => t('filter.label');
-      const hideTip = () => t(filterMode === 'hide' ? 'filter.tip.on' : 'filter.tip.off');
-      const holdOnlyLabel = () => t('filter.holdOnly');
-      const holdOnlyTip = () => t(filterMode === 'hold' ? 'filter.holdOnly.on' : 'filter.holdOnly.off');
+      const WRAP_ATTR = 'data-status-lamp-filter-wrap';
 
-      /**
-       * Persist and apply one view mode, then repaint both injected rows so their
-       * icon and tooltip always describe the mode that is actually active.
-       */
-      const setFilterMode = (next) => {
-        filterMode = normalizeFilterMode(next);
+      /** Localized label for one show token. */
+      const tokenLabel = (token) => t(token === 'hold' ? 'filter.hold' : 'filter.archived');
+      /** Localized tooltip for one show token. */
+      const tokenTip = (token) => t(token === 'hold' ? 'filter.hold.tip' : 'filter.archived.tip');
+      /** Icon for one show token. */
+      const tokenIcon = (token) => (token === 'hold' ? HOLD_ICON : ARCHIVED_ICON);
+
+      /** Persist and apply the show set, then repaint both rows. */
+      const setShowSet = (next) => {
+        showSet = new Set(next);
         try {
-          window.localStorage.setItem(FILTER_KEY, filterMode);
+          window.localStorage.setItem(FILTER_KEY, JSON.stringify([...showSet]));
         } catch {
           /* Filtering still works for this page load without storage. */
         }
@@ -472,65 +486,43 @@ window.__ModuleLoader__.load({
         }
       };
 
-      /** Repaint one injected row (label, tooltip, icon); writes only when changed. */
-      const refreshRow = (role, label, tip, icon) => {
-        const node = document.querySelector(`[${ROW_ROLE_ATTR}="${role}"]`);
+      /** One injected row: checkbox row for a single group. */
+      const refreshRow = (token) => {
+        const node = document.querySelector(`[${ROW_ROLE_ATTR}="${token}"]`);
         if (node === null) return;
+        const checked = showSet.has(token);
+        const label = tokenLabel(token);
+        const tip = tokenTip(token);
         if (node.getAttribute('aria-label') !== label) node.setAttribute('aria-label', label);
         if (node.title !== tip) node.title = tip;
         const iconHost = node.querySelector('[class*="itemIcon"]');
+        const icon = tokenIcon(token);
         if (iconHost !== null && iconHost.innerHTML !== icon) iconHost.innerHTML = icon;
         const labelHost = node.querySelector('[class*="itemLabel"]');
         if (labelHost !== null && labelHost.textContent !== label) labelHost.textContent = label;
-      };
-
-      /** Selected class names captured from the shipped row our row was cloned from. */
-      const selectedClassesOf = (row) => {
-        try {
-          const raw = row.dataset.statusLampSelectedClasses;
-          return raw === undefined ? [] : JSON.parse(raw);
-        } catch {
-          return [];
+        for (const check of node.querySelectorAll('[class*="_check"]')) {
+          const display = checked ? '' : 'none';
+          if (check.style.display !== display) check.style.display = display;
         }
+        const ariaChecked = checked ? 'true' : 'false';
+        if (node.getAttribute('aria-checked') !== ariaChecked) node.setAttribute('aria-checked', ariaChecked);
       };
 
-      /** Repaint both injected rows from the current mode. */
+      /** Repaint both checkbox rows from the current show set. */
       const refreshFilterRows = () => {
-        refreshRow('hide-toggle', hideLabel(), hideTip(), filterMode === 'hide' ? EYE_OFF : EYE_ON);
-        refreshRow('hold-only', holdOnlyLabel(), holdOnlyTip(), HOLD_ONLY_ICON);
+        for (const token of SHOW_TOKENS) refreshRow(token);
       };
 
-      /**
-       * The five filter rows behave as one radio group: exactly one looks selected.
-       * Our rows borrow the shipped selected paint while active; while one of ours
-       * is active the shipped rows must stop looking selected.
-       */
+      /** Repaint the rows' checked state only (used after a re-render). */
       const refreshMenuItemState = () => {
-        for (const row of document.querySelectorAll('[' + FILTER_ITEM_ATTR + ']')) {
-          const role = row.getAttribute(ROW_ROLE_ATTR);
-          const active = (role === 'hide-toggle' && filterMode === 'hide') || (role === 'hold-only' && filterMode === 'hold');
-          for (const name of selectedClassesOf(row)) row.classList.toggle(name, active);
-          for (const check of row.querySelectorAll('[class*="_check"]')) check.style.display = active ? '' : 'none';
-          const checked = active ? 'true' : 'false';
-          if (row.getAttribute('aria-checked') !== checked) row.setAttribute('aria-checked', checked);
-        }
-        const section = visibleFilterSection();
-        const parent = section === null ? null : section.parentElement;
-        if (parent === null) return;
-        for (const button of parent.querySelectorAll('button[role="menuitem"]')) {
-          if (button.hasAttribute(FILTER_ITEM_ATTR)) continue;
-          if (filterMode === 'show') {
-            // Hand selection back to the shipped radio group.
-            const saved = button.dataset.statusLampStrippedSelected;
-            if (saved === undefined) continue;
-            for (const name of JSON.parse(saved)) button.classList.add(name);
-            delete button.dataset.statusLampStrippedSelected;
-            continue;
+        for (const token of SHOW_TOKENS) {
+          const row = document.querySelector(`[${ROW_ROLE_ATTR}="${token}"]`);
+          if (row === null) continue;
+          const checked = showSet.has(token);
+          for (const check of row.querySelectorAll('[class*="_check"]')) {
+            const display = checked ? '' : 'none';
+            if (check.style.display !== display) check.style.display = display;
           }
-          const selectedClasses = [...button.classList].filter((name) => /_selected/.test(name));
-          if (selectedClasses.length === 0) continue;
-          button.dataset.statusLampStrippedSelected = JSON.stringify(selectedClasses);
-          for (const name of selectedClasses) button.classList.remove(name);
         }
       };
 
@@ -539,7 +531,6 @@ window.__ModuleLoader__.load({
        * Shipped items are wrapped in a per-item element, so the wrapper is cloned
        * when present and the real row is the button inside it.
        */
-      const WRAP_ATTR = 'data-status-lamp-filter-wrap';
       const buildRow = (anchor, parent, role) => {
         const wrapper = anchor.parentElement !== null && anchor.parentElement !== parent ? anchor.parentElement : null;
         const node = (wrapper ?? anchor).cloneNode(true);
@@ -551,8 +542,6 @@ window.__ModuleLoader__.load({
           if (/_check/i.test(String(element.className))) element.style.display = 'none';
         }
         const row = wrapper === null ? node : node.querySelector('button[role="menuitem"]') ?? node;
-        const selectedClasses = [...anchor.classList].filter((name) => /_selected/.test(name));
-        if (selectedClasses.length > 0) row.dataset.statusLampSelectedClasses = JSON.stringify(selectedClasses);
         for (const name of [
           'id',
           'aria-haspopup',
@@ -602,47 +591,68 @@ window.__ModuleLoader__.load({
         return section;
       };
 
-      /** Mark the shipped rows and drop parenthetical suffixes such as 全部对话（显示已归档）. */
-      const tidyNativeRows = (parent) => {
-        for (const button of parent.querySelectorAll('button[role="menuitem"]')) {
-          if (button.hasAttribute(FILTER_ITEM_ATTR)) continue;
-          button.setAttribute(NATIVE_ATTR, '');
-          for (const label of button.querySelectorAll('[class*="itemLabel"]')) {
-            const text = label.textContent ?? '';
-            const tidy = stripParenthetical(text);
-            if (tidy !== '' && tidy !== text) label.textContent = tidy;
-          }
+      /** The direct child of `parent` that contains `element` (shipped rows sit in wrappers). */
+      const siblingOf = (element, parent) => {
+        let node = element;
+        while (node.parentElement !== null && node.parentElement !== parent) node = node.parentElement;
+        return node;
+      };
+
+      /** Hide the shipped filter rows: the section is replaced by our two checkboxes. */
+      const hideNativeRows = (parent, nativeButtons) => {
+        for (const button of nativeButtons) {
+          const sibling = siblingOf(button, parent);
+          if (sibling !== null && 'style' in sibling) sibling.style.display = 'none';
         }
       };
 
       /**
-       * Insert both plugin rows into the visible filter section: the hide toggle as
-       * the first row, and "show only on hold" as the last row. The shipped rows
-       * keep their positions in between.
+       * A shipped filter can persist a non-default choice from an earlier session
+       * (for example "only archived"); reset it to "all conversations" so the two
+       * checkboxes stay accurate. The middle shipped row is that default.
+       */
+      const resetShippedFilter = (nativeButtons) => {
+        const defaultRow = nativeButtons[1] ?? null;
+        if (defaultRow === null) return;
+        const selected = nativeButtons.find((button) => /_selected/.test(String(button.className)));
+        if (selected === undefined || selected === defaultRow) return;
+        try {
+          defaultRow.click();
+        } catch {
+          /* A failing reset only leaves the shipped filter as the user left it. */
+        }
+      };
+
+      /**
+       * Replace the shipped rows with the two checkbox rows. Both are inserted right
+       * after the section label, in SHOW_TOKENS order.
        */
       const ensureFilterSection = () => {
         const section = visibleFilterSection();
         if (section === null) return;
         const parent = section.parentElement;
         if (parent === null) return;
-        tidyNativeRows(parent);
+        for (const stale of parent.querySelectorAll('[' + FILTER_ITEM_ATTR + ']')) {
+          const role = stale.getAttribute(ROW_ROLE_ATTR);
+          if (SHOW_TOKENS.includes(role)) continue;
+          const wrap = stale.closest('[' + WRAP_ATTR + ']');
+          (wrap ?? stale).remove();
+          stale.remove();
+        }
         const nativeButtons = [...parent.querySelectorAll('button[role="menuitem"]')].filter(
           (button) => !button.hasAttribute(FILTER_ITEM_ATTR),
         );
         if (nativeButtons.length === 0) return;
-        // Insert as siblings of the shipped wrappers, never inside them.
-        const siblingOf = (element) => {
-          let node = element;
-          while (node.parentElement !== null && node.parentElement !== parent) node = node.parentElement;
-          return node;
-        };
-        if (parent.querySelector(`[${ROW_ROLE_ATTR}="hide-toggle"]`) === null) {
-          siblingOf(section).after(buildRow(nativeButtons[0], parent, 'hide-toggle'));
-        }
-        if (parent.querySelector(`[${ROW_ROLE_ATTR}="hold-only"]`) === null) {
-          siblingOf(nativeButtons[nativeButtons.length - 1]).after(
-            buildRow(nativeButtons[0], parent, 'hold-only'),
-          );
+        for (const button of nativeButtons) button.setAttribute(NATIVE_ATTR, '');
+        resetShippedFilter(nativeButtons);
+        hideNativeRows(parent, nativeButtons);
+        let anchorNode = siblingOf(section, parent);
+        for (const token of SHOW_TOKENS) {
+          if (parent.querySelector(`[${ROW_ROLE_ATTR}="${token}"]`) === null) {
+            anchorNode.after(buildRow(nativeButtons[0], parent, token));
+          }
+          const row = parent.querySelector(`[${ROW_ROLE_ATTR}="${token}"]`);
+          if (row !== null) anchorNode = siblingOf(row, parent);
         }
         refreshFilterRows();
         refreshMenuItemState();
@@ -650,9 +660,8 @@ window.__ModuleLoader__.load({
 
       /**
        * Insert once the menu is positioned: a menu that just mounted still sits at
-       * its pre-layout position, so retry briefly until the row lands or the menu
-       * goes away. A failure here must never surface — the native menu keeps
-       * working without the extra row.
+       * its pre-layout position, so retry briefly until both rows land or the menu
+       * goes away. A failure here must never surface.
        */
       let retryTimer = null;
       const clearRetry = () => {
@@ -668,7 +677,7 @@ window.__ModuleLoader__.load({
           const visibleRows = [...document.querySelectorAll('[' + FILTER_ITEM_ATTR + ']')].filter((node) =>
             onScreen(node.getBoundingClientRect()),
           );
-          if (visibleRows.length >= 2) return;
+          if (visibleRows.length >= SHOW_TOKENS.length) return;
           if (attempt >= 6) return;
           retryTimer = window.setTimeout(() => ensureWithRetry(attempt + 1), 80);
         } catch (error) {
@@ -676,10 +685,7 @@ window.__ModuleLoader__.load({
         }
       };
 
-      /**
-       * Coalesce observer bursts into one injection pass: React can add dozens of
-       * nodes in a render, and re-running the DOM walk for each is wasteful.
-       */
+      /** Coalesce observer bursts into one injection pass. */
       let ensureTimer = null;
       const scheduleEnsure = () => {
         if (ensureTimer !== null) return;
@@ -703,57 +709,23 @@ window.__ModuleLoader__.load({
               }
             }
           }
-          // A React re-render inside an open menu can drop the injected rows.
           if (added && document.querySelector(FILTER_MENU_SELECTOR) !== null) scheduleEnsure();
         } catch (error) {
           console.warn('[dsh-status-lamp] view-options observer failed', error);
         }
       });
 
-      /**
-       * One capture-phase click handler for every row: it survives React replacing
-       * the cloned nodes, which per-node listeners did not.
-       */
-      let applyingDefault = false;
+      /** Capture-phase toggle handler: survives React replacing the cloned rows. */
       const onDocumentClick = (event) => {
         const target = event.target;
         if (!(target instanceof Element)) return;
         const ownRow = target.closest('[' + FILTER_ITEM_ATTR + ']');
-        if (ownRow !== null) {
-          event.preventDefault();
-          event.stopPropagation();
-          const role = ownRow.getAttribute(ROW_ROLE_ATTR);
-          const targetMode = role === 'hold-only' ? 'hold' : 'hide';
-          // Radio group: clicking the already selected option changes nothing.
-          if (filterMode === targetMode) return;
-          const section = visibleFilterSection();
-          const parent = section === null ? null : section.parentElement;
-          const shipped =
-            parent === null
-              ? []
-              : [...parent.querySelectorAll('button[role="menuitem"]')].filter(
-                  (button) => !button.hasAttribute(FILTER_ITEM_ATTR),
-                );
-          // Shipped order is hide archived, all conversations, only archived. Pick
-          // "all conversations" so our mode replaces the shipped filter rather than
-          // stacking with it, keeping the five options mutually exclusive.
-          const defaultRow = shipped[1] ?? null;
-          if (defaultRow !== null) {
-            applyingDefault = true;
-            try {
-              defaultRow.click();
-            } finally {
-              applyingDefault = false;
-            }
-          }
-          setFilterMode(targetMode);
-          return;
-        }
-        const nativeRow = target.closest('button[' + NATIVE_ATTR + ']');
-        if (nativeRow !== null && !nativeRow.hasAttribute(FILTER_ITEM_ATTR) && !applyingDefault && filterMode !== 'show') {
-          // A shipped filter wins: hand the radio group back to DSH.
-          setFilterMode('show');
-        }
+        if (ownRow === null) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const token = ownRow.getAttribute(ROW_ROLE_ATTR);
+        if (!SHOW_TOKENS.includes(token)) return;
+        setShowSet(toggleShowToken(showSet, token));
       };
 
       ctx.effect(() => {
@@ -781,7 +753,7 @@ window.__ModuleLoader__.load({
           if (ensureTimer !== null) window.clearTimeout(ensureTimer);
           for (const node of document.querySelectorAll(`[${FILTER_ITEM_ATTR}],[${WRAP_ATTR}]`)) node.remove();
         };
-      }, 'status-lamp: filter menu row');
+      }, 'status-lamp: filter menu rows');
 
       // Capture-phase delegation survives React replacing the cloned rows.
       ctx.effect(() => {
@@ -789,7 +761,7 @@ window.__ModuleLoader__.load({
         return () => document.removeEventListener('click', onDocumentClick, true);
       }, 'status-lamp: filter row clicks');
 
-      // A language switch rebuilds the injected row with the active locale's copy.
+      // A language switch rebuilds the rows with the active locale's copy.
       ctx.effect(
         () =>
           ctx.locale.subscribe(() => {
@@ -797,10 +769,10 @@ window.__ModuleLoader__.load({
               for (const node of document.querySelectorAll(`[${FILTER_ITEM_ATTR}],[${WRAP_ATTR}]`)) node.remove();
               ensureWithRetry();
             } catch (error) {
-              console.warn('[dsh-status-lamp] filter row locale refresh failed', error);
+              console.warn('[dsh-status-lamp] filter rows locale refresh failed', error);
             }
           }),
-        'status-lamp: filter row locale',
+        'status-lamp: filter rows locale',
       );
 
       // Keep stored marks in step with the Host's list: drop dead ids once the
@@ -836,7 +808,7 @@ window.__ModuleLoader__.load({
       inject,
       apply,
       /** Pure helpers exposed for the smoke test; no behaviour depends on them. */
-      __test: { readFilterMode, normalizeFilterMode, stripParenthetical },
+      __test: { readShowSet, toggleShowToken, showAttrValue },
     };
   },
 });

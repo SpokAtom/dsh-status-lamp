@@ -241,27 +241,31 @@ const zhKeys = Object.keys(localeDicts.zh).sort();
 const enKeys = Object.keys(localeDicts.en).sort();
 assert.deepEqual(zhKeys, enKeys, 'zh/en dictionaries must share the same keys');
 
-const filterCss = styleTags.map((tag) => tag.textContent).find((text) => /data-status-lamp-filter/.test(text));
+const filterCss = styleTags.map((tag) => tag.textContent).find((text) => /data-status-lamp-show/.test(text));
 assert.ok(filterCss, 'filter stylesheet was not injected');
 assert.match(filterCss, /data-row-key\^="session:"/, 'filter stylesheet must target session rows');
 assert.match(filterCss, /_archived/, 'filter stylesheet must target archived rows');
-assert.match(filterCss, /hold/, 'filter stylesheet must target hold rows');
-assert.match(filterCss, /data-status-lamp-filter="hold"/, 'filter stylesheet must implement the on-hold-only mode');
-assert.match(filterCss, /:not\(:has\(\[data-status-lamp="hold"\]\)\)/, 'on-hold-only mode must hide everything else');
+assert.match(filterCss, /data-status-lamp="hold"/, 'filter stylesheet must target hold rows');
+assert.match(filterCss, /:not\(\[data-status-lamp-show~="hold"\]\)/, 'hold rows must hide when the token is absent');
+assert.match(filterCss, /:not\(\[data-status-lamp-show~="archived"\]\)/, 'archived rows must hide when the token is absent');
 
-// Pure view-mode helpers (also exercised by the delegated click handler).
+// Pure show-set helpers (also exercised by the delegated click handler).
 const helpers = client.__test;
 assert.ok(helpers, 'test helpers were not exposed');
-assert.equal(helpers.normalizeFilterMode('hide'), 'hide');
-assert.equal(helpers.normalizeFilterMode('hold'), 'hold');
-assert.equal(helpers.normalizeFilterMode('show'), 'show');
-assert.equal(helpers.normalizeFilterMode('bogus'), 'show', 'unknown modes must fall back to show');
-assert.equal(helpers.normalizeFilterMode(null), 'show');
-assert.equal(helpers.stripParenthetical('全部对话（显示已归档）'), '全部对话');
-assert.equal(helpers.stripParenthetical('All conversations (show archived)'), 'All conversations');
-assert.equal(helpers.stripParenthetical('保持原样'), '保持原样');
+assert.deepEqual([...helpers.readShowSet()], [], 'empty storage means both groups are hidden');
+storage.set('dsh.status-lamp.show.v1', JSON.stringify(['hold']));
+assert.deepEqual([...helpers.readShowSet()], ['hold']);
+storage.set('dsh.status-lamp.show.v1', JSON.stringify(['archived', 'hold']));
+assert.deepEqual([...helpers.readShowSet()].sort(), ['archived', 'hold']);
+storage.set('dsh.status-lamp.show.v1', 'not json');
+assert.deepEqual([...helpers.readShowSet()], [], 'garbage storage must fall back to hidden');
+storage.delete('dsh.status-lamp.show.v1');
+const toggled = helpers.toggleShowToken(new Set(), 'hold');
+assert.deepEqual([...toggled], ['hold']);
+assert.deepEqual([...helpers.toggleShowToken(toggled, 'hold')], [], 'toggle must be reversible');
+assert.equal(helpers.showAttrValue(new Set(['archived', 'hold'])), 'hold archived', 'attribute order must be stable');
 
-assert.equal(rootAttributes.get('data-status-lamp-filter'), 'show');
+assert.equal(rootAttributes.get('data-status-lamp-show'), '');
 assert.ok(localeListeners.length > 0, 'locale change listener was not installed');
 
 for (const cleanup of cleanups) cleanup();

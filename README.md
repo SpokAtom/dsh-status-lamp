@@ -129,15 +129,18 @@ const AUTO_HOLD_MS = 5 * 24 * 60 * 60 * 1000; // 7 days: 7 * 24 * ...
 
 The hold is released as soon as DSH reports the session as running, so the mark can never disagree with reality. Running sessions do not offer the hold action in their menu at all.
 
-### 4. Hide archived and on-hold sessions
+### 4. Show or hide on-hold and archived sessions
 
 1. Click the **sliders icon** in the "Workspaces" header to open the view options.
-2. The **Filter sessions** section holds **five mutually exclusive options**:
-   - shipped: *Hide archived*, *All conversations*, *Only archived*;
-   - plugin: **Hide archived and on hold** (first row) and **Show only on hold** (last row).
-3. They behave as one radio group: picking a plugin option first resets the shipped filter to *All conversations*, then applies the plugin filter; picking a shipped option clears the plugin filter.
-4. Clicking the already selected option does nothing — choose *All conversations* to return to the unfiltered list.
-5. The shipped *All conversations (show archived)* label is tidied to *All conversations*.
+2. The **Filter sessions** section now holds exactly two checkboxes: **On hold** and **Archived**; the shipped filter rows are hidden.
+3. It is multi-select:
+   - neither checked → only the *other* sessions are listed (on-hold and archived rows are hidden);
+   - check **On hold** → on-hold rows are added back;
+   - check **Archived** → archived rows are added back;
+   - both checked → nothing is hidden.
+4. The choice is stored in browser local storage.
+
+> If a shipped filter was left in a non-default state (for example *Only archived*), opening this menu once resets it to *All conversations* so the checkboxes stay truthful.
 
 ![The Filter sessions section with the new first item (illustration)](docs/filter-menu-en.svg)
 

@@ -1,22 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="680" height="284" viewBox="0 0 680 284" font-family="Segoe UI, Microsoft YaHei, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="228" viewBox="0 0 680 228" font-family="Segoe UI, Microsoft YaHei, sans-serif">
   <defs>
     <filter id="sh" x="-10%" y="-10%" width="120%" height="120%">
       <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000" flood-opacity="0.08"/>
     </filter>
   </defs>
-  <rect x="10" y="10" width="660" height="264" rx="14" fill="#fbfbfd" stroke="#dfe3ea" filter="url(#sh)"/>
-  <text x="36" y="42" font-size="14" fill="#6b7280">筛选会话</text>
-  <rect x="20" y="60" width="640" height="46" rx="9" fill="#eef2ff" stroke="#2f6feb" stroke-width="1.5"/><g stroke="#5a6472" stroke-width="2" fill="none">
-    <ellipse cx="58" cy="83" rx="12" ry="7"/><circle cx="58" cy="83" r="3" fill="#5a6472" stroke="none"/>
-    <line x1="50" y1="77" x2="66" y2="89"/></g>
-  <text x="88" y="89" font-size="17" fill="#1f2328">隐藏已归档及挂起</text><text x="618" y="89" font-size="12" fill="#6b7280" text-anchor="end">↑ 新增项</text>
-  <g stroke="#8a909a" stroke-width="2" fill="none">
-    <rect x="48" y="129" width="20" height="13" rx="2"/><path d="M48 141 L58 127 L68 141"/></g>
-  <text x="88" y="141" font-size="17" fill="#1f2328">隐藏已归档</text>
-  <g stroke="#8a909a" stroke-width="2" fill="none">
-    <rect x="47" y="179" width="24" height="16" rx="4"/><path d="M52 193 L52 193 L60 193"/></g>
-  <text x="88" y="193" font-size="17" fill="#1f2328">全部对话</text><text x="618" y="193" font-size="12" fill="#6b7280" text-anchor="end">括号已去掉</text>
-  <rect x="20" y="216" width="640" height="46" rx="9" fill="#eef2ff" stroke="#2f6feb" stroke-width="1.5"/><g stroke="#8a909a" stroke-width="2" fill="none">
-    <circle cx="58" cy="239" r="9"/><circle cx="58" cy="239" r="3" fill="#8a909a" stroke="none"/></g>
-  <text x="88" y="245" font-size="17" fill="#1f2328">仅显示已挂起</text><text x="618" y="245" font-size="12" fill="#6b7280" text-anchor="end">新增</text>
+  <rect x="10" y="10" width="660" height="208" rx="14" fill="#fbfbfd" stroke="#dfe3ea" filter="url(#sh)"/>
+  <text x="36" y="44" font-size="14" fill="#6b7280">筛选会话</text>
+  <rect x="44" y="70" width="20" height="20" rx="5" fill="#2f6feb"/><path d="M49 80.5 L53 84.5 L59 76.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="88" y="87" font-size="17" fill="#1f2328">已挂起</text>
+  <rect x="44" y="124" width="20" height="20" rx="5" fill="#fff" stroke="#b6bcc6" stroke-width="2"/>
+  <text x="88" y="141" font-size="17" fill="#1f2328">已归档</text>
+  <text x="36" y="194" font-size="12.5" fill="#6b7280">都不勾选 = 只显示其他会话；勾选哪个就额外显示哪一组</text>
 </svg>

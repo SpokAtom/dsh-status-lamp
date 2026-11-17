@@ -16,8 +16,8 @@
         "zh": "状态灯"
       },
       "description": {
-        "en": "Sidebar session-row status light (status indicator): blue idle, hollow grey on hold (manual or after 5 quiet days, released when it runs), solid grey archived; hide archived and on-hold rows, or show on-hold sessions only.",
-        "zh": "侧栏会话行状态灯（状态指示灯）：空闲蓝点、挂起灰空心（手动或 5 天无对话自动，恢复运行即解除）、归档灰实心；可隐藏归档与挂起，或仅显示已挂起。"
+        "en": "Sidebar session-row status light (status indicator): blue idle, hollow grey on hold, solid grey archived. Filter sessions has two checkboxes — On hold and Archived — to show or hide those groups.",
+        "zh": "侧栏会话行状态灯（状态指示灯）：空闲蓝点、挂起灰空心、归档灰实心。「筛选会话」两个复选框控制是否显示已挂起/已归档。"
       },
       "icon": "icons/status-lamp.svg",
       "author": "SpokAtom",

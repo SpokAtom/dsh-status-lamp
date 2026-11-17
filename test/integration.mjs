@@ -1,9 +1,7 @@
 /**
- * Integration test for the view-options filter rows, run against a real DOM
- * (jsdom) instead of the minimal stubs used by smoke.mjs. It builds a menu that
- * mirrors the shipped structure, lets the plugin inject its two rows, then
- * exercises clicking, native-filter reset, label tidying and re-injection after a
- * React-style re-render.
+ * Integration test for the multi-select filter rows, run against a real DOM
+ * (jsdom). The shipped filter is replaced by two checkbox rows — "On hold" and
+ * "Archived" — where neither checked means only the remaining sessions are shown.
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -66,7 +64,6 @@ const client = loaded.factory(() => reactStub);
 
 const cleanups = [];
 let registeredDicts = null;
-const localeListeners = [];
 const ctx = {
   effect(factory) {
     const cleanup = factory();
@@ -81,8 +78,7 @@ const ctx = {
     bind() {
       return (key) => registeredDicts.zh[key] ?? key;
     },
-    subscribe(listener) {
-      localeListeners.push(listener);
+    subscribe() {
       return () => {};
     },
   },
@@ -116,7 +112,7 @@ sectionLabel.textContent = '筛选会话';
 sectionLabel.__rect = { width: 200, height: 20, top: 100, left: 0, right: 200, bottom: 120 };
 menu.appendChild(sectionLabel);
 
-const nativeLabels = ['隐藏已归档', '全部对话（显示已归档）', '仅显示已归档'];
+const nativeLabels = ['隐藏已归档', '全部对话', '仅显示已归档'];
 const nativeWrappers = [];
 const nativeButtons = nativeLabels.map((text, index) => {
   const wrapper = window.document.createElement('div');
@@ -129,7 +125,10 @@ const nativeButtons = nativeLabels.map((text, index) => {
   const label = window.document.createElement('span');
   label.className = 'itemLabel_hash';
   label.textContent = text;
-  button.append(icon, label);
+  const check = window.document.createElement('span');
+  check.className = '_check_hash';
+  check.textContent = '✓';
+  button.append(icon, label, check);
   const rect = { width: 200, height: 30, top: 130 + index * 30, left: 0, right: 200, bottom: 160 + index * 30 };
   button.__rect = rect;
   wrapper.__rect = rect;
@@ -138,10 +137,18 @@ const nativeButtons = nativeLabels.map((text, index) => {
   nativeWrappers.push(wrapper);
   return button;
 });
+
+// Simulate a persisted shipped filter that is not the default ("only archived").
+nativeButtons[2].classList.add('_selected_hash');
+let defaultClicks = 0;
+nativeButtons[1].addEventListener('click', () => {
+  defaultClicks += 1;
+});
+
 window.document.body.appendChild(menu);
-nativeButtons[0].classList.add('_selected_hash');
 
 const rows = () => [...window.document.querySelectorAll('[data-status-lamp-filter-item]')];
+const rowFor = (role) => window.document.querySelector(`[data-status-lamp-filter-role="${role}"]`);
 const waitFor = async (predicate, timeout = 1500) => {
   const started = Date.now();
   while (Date.now() - started < timeout) {
@@ -151,66 +158,80 @@ const waitFor = async (predicate, timeout = 1500) => {
   return false;
 };
 
-assert.ok(await waitFor(() => rows().length === 2), 'two filter rows were not injected');
+assert.ok(await waitFor(() => rows().length === 2), 'two checkbox rows were not injected');
 
-const hideRow = window.document.querySelector('[data-status-lamp-filter-role="hide-toggle"]');
-const holdRow = window.document.querySelector('[data-status-lamp-filter-role="hold-only"]');
+const holdRow = rowFor('hold');
+const archivedRow = rowFor('archived');
+assert.ok(holdRow, 'on-hold checkbox missing');
+assert.ok(archivedRow, 'archived checkbox missing');
+assert.equal(holdRow.textContent.includes('已挂起'), true, 'on-hold label is wrong');
+assert.equal(archivedRow.textContent.includes('已归档'), true, 'archived label is wrong');
+
+// The shipped rows are hidden: the section is now exactly two checkboxes.
+assert.equal(
+  nativeWrappers.every((wrapper) => wrapper.style.display === 'none'),
+  true,
+  'shipped filter rows must be hidden',
+);
+assert.equal(defaultClicks, 1, 'a persisted non-default shipped filter must be reset to all conversations');
 const rowWrapper = (row) => row.closest('[data-status-lamp-filter-wrap]');
-assert.ok(hideRow, 'hide toggle row missing');
-assert.ok(holdRow, 'on-hold-only row missing');
-assert.ok(rowWrapper(hideRow), 'injected rows must clone the shipped wrapper');
-assert.equal(hideRow.textContent.includes('隐藏已归档及挂起'), true, 'hide row label is wrong');
-assert.equal(holdRow.textContent.includes('仅显示已挂起'), true, 'on-hold-only label is wrong');
-assert.equal(rowWrapper(holdRow).previousElementSibling, nativeWrappers[2], 'on-hold-only row must be last');
-assert.equal(sectionLabel.nextElementSibling, rowWrapper(hideRow), 'hide toggle must be first');
-assert.equal(nativeWrappers[2].querySelectorAll('[data-status-lamp-filter-item]').length, 0, 'on-hold-only row must not be nested inside a shipped row');
+assert.equal(sectionLabel.nextElementSibling, rowWrapper(holdRow), 'hold row must come first');
+assert.equal(rowWrapper(holdRow).nextElementSibling, rowWrapper(archivedRow), 'archived row must follow the hold row');
 
-assert.equal(nativeButtons[1].textContent.includes('（显示已归档）'), false, 'parenthetical suffix was not removed');
-assert.equal(nativeButtons[1].textContent.trim(), '全部对话', 'native label after tidying is wrong');
-
-// Click the hide toggle: the stylesheet attribute and storage must follow.
+const attr = () => window.document.documentElement.getAttribute('data-status-lamp-show');
+const stored = () => JSON.parse(window.localStorage.getItem('dsh.status-lamp.show.v1') ?? '[]');
 const click = (element) => element.dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
-let defaultClicks = 0;
-nativeButtons[1].addEventListener('click', () => {
-  defaultClicks += 1;
-});
+const checked = (row) => {
+  const check = row.querySelector('[class*="_check"]');
+  return check !== null && check.style.display !== 'none';
+};
 
-click(hideRow);
-assert.equal(window.document.documentElement.getAttribute('data-status-lamp-filter'), 'hide');
-assert.equal(window.localStorage.getItem('dsh.status-lamp.filter.v1'), 'hide');
-// The five options are one radio group: picking ours first resets the shipped one.
-assert.equal(defaultClicks, 1, 'selecting a plugin row must reset the shipped filter');
-assert.equal(nativeButtons[0].classList.contains('_selected_hash'), false, 'shipped selection must be cleared');
-assert.equal(hideRow.classList.contains('_selected_hash'), true, 'our active row must borrow the selected paint');
-assert.equal(hideRow.getAttribute('aria-checked'), 'true');
+// Nothing checked: hide both groups (only the remaining sessions stay visible).
+assert.equal(attr(), '', 'default state must hide both groups');
+assert.equal(stored().length, 0);
+assert.equal(checked(holdRow), false);
+assert.equal(checked(archivedRow), false);
 
-// Clicking the already selected option is a no-op (radio, not toggle).
-click(hideRow);
-assert.equal(window.document.documentElement.getAttribute('data-status-lamp-filter'), 'hide');
-assert.equal(defaultClicks, 1, 're-clicking the active row must not fire the shipped filter again');
-
-// Click the on-hold-only row: it replaces the mode, not stacks on it.
+// Check "On hold": adds on-hold rows on top of the remaining sessions.
 click(holdRow);
-assert.equal(window.document.documentElement.getAttribute('data-status-lamp-filter'), 'hold');
-assert.equal(window.localStorage.getItem('dsh.status-lamp.filter.v1'), 'hold');
-assert.equal(hideRow.classList.contains('_selected_hash'), false, 'only one row may look selected');
-assert.equal(holdRow.classList.contains('_selected_hash'), true, 'on-hold-only row must look selected');
+assert.equal(attr(), 'hold');
+assert.deepEqual(stored(), ['hold']);
+assert.equal(checked(holdRow), true);
+assert.equal(checked(archivedRow), false);
 
-// Choosing a shipped filter clears the plugin mode so the two never stack.
-click(nativeButtons[2]);
-assert.equal(window.document.documentElement.getAttribute('data-status-lamp-filter'), 'show');
-assert.equal(holdRow.classList.contains('_selected_hash'), false);
-assert.equal(nativeButtons[0].classList.contains('_selected_hash'), true, 'shipped selection must be restored');
+// Check "Archived" as well: both groups are shown, still additive.
+click(archivedRow);
+assert.equal(attr(), 'hold archived');
+assert.deepEqual(stored().sort(), ['archived', 'hold']);
+assert.equal(checked(archivedRow), true);
+
+// Unchecking one group only removes that group.
+click(holdRow);
+assert.equal(attr(), 'archived');
+assert.deepEqual(stored(), ['archived']);
+assert.equal(checked(holdRow), false);
+
+// Unchecking the last group returns to "hide both".
+click(archivedRow);
+assert.equal(attr(), '');
+assert.deepEqual(stored(), []);
+
+// Checkboxes are independent: clicking a hidden shipped row changes nothing.
+click(nativeButtons[0]);
+assert.equal(attr(), '');
 
 // A React-style re-render can drop the injected rows while the menu stays open.
+click(holdRow);
 rows().forEach((row) => row.remove());
 const extra = window.document.createElement('span');
 menu.appendChild(extra);
 assert.ok(await waitFor(() => rows().length === 2), 'rows were not re-injected after a re-render');
+assert.equal(attr(), 'hold', 'checked state must survive a re-render');
+assert.equal(checked(rowFor('hold')), true, 're-injected row must render the persisted checked state');
 
 for (const cleanup of cleanups) cleanup();
-console.log('PASS menu rows injected in the right order');
-console.log('PASS shipped parenthetical label tidied');
-console.log('PASS hide toggle, on-hold-only mode and native-filter reset');
-console.log('PASS rows re-injected after a React-style re-render');
+console.log('PASS two checkbox rows replace the shipped filter rows');
+console.log('PASS both unchecked hides both groups; each check adds one group');
+console.log('PASS additive multi-select and persistence');
+console.log('PASS rows re-injected after a React-style re-render with state intact');
 console.log('integration: ok');
