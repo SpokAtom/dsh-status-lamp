@@ -63,6 +63,8 @@ const documentStub = {
   getElementById() {
     return null;
   },
+  addEventListener() {},
+  removeEventListener() {},
   querySelector() {
     return null;
   },
@@ -244,6 +246,26 @@ assert.ok(filterCss, 'filter stylesheet was not injected');
 assert.match(filterCss, /data-row-key\^="session:"/, 'filter stylesheet must target session rows');
 assert.match(filterCss, /_archived/, 'filter stylesheet must target archived rows');
 assert.match(filterCss, /hold/, 'filter stylesheet must target hold rows');
+assert.match(filterCss, /data-status-lamp-filter="hold"/, 'filter stylesheet must implement the on-hold-only mode');
+assert.match(filterCss, /:not\(:has\(\[data-status-lamp="hold"\]\)\)/, 'on-hold-only mode must hide everything else');
+
+// Pure view-mode helpers (also exercised by the delegated click handler).
+const helpers = client.__test;
+assert.ok(helpers, 'test helpers were not exposed');
+assert.equal(helpers.normalizeFilterMode('hide'), 'hide');
+assert.equal(helpers.normalizeFilterMode('hold'), 'hold');
+assert.equal(helpers.normalizeFilterMode('show'), 'show');
+assert.equal(helpers.normalizeFilterMode('bogus'), 'show', 'unknown modes must fall back to show');
+assert.equal(helpers.normalizeFilterMode(null), 'show');
+assert.equal(helpers.nextHideMode('show'), 'hide');
+assert.equal(helpers.nextHideMode('hide'), 'show');
+assert.equal(helpers.nextHideMode('hold'), 'hide', 'holding then hiding is a legal move');
+assert.equal(helpers.nextHoldOnlyMode('show'), 'hold');
+assert.equal(helpers.nextHoldOnlyMode('hold'), 'show');
+assert.equal(helpers.nextHoldOnlyMode('hide'), 'hold');
+assert.equal(helpers.stripParenthetical('全部对话（显示已归档）'), '全部对话');
+assert.equal(helpers.stripParenthetical('All conversations (show archived)'), 'All conversations');
+assert.equal(helpers.stripParenthetical('保持原样'), '保持原样');
 
 assert.equal(rootAttributes.get('data-status-lamp-filter'), 'show');
 assert.ok(localeListeners.length > 0, 'locale change listener was not installed');

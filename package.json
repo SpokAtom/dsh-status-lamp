@@ -41,7 +41,7 @@
     "dsh": ">=0.2.2-rc.1"
   },
   "scripts": {
-    "test": "node test/smoke.mjs"
+    "test": "node test/smoke.mjs && node test/integration.mjs"
   },
   "exports": {
     ".": "./index.js",
@@ -72,5 +72,8 @@
         "@deepseek-ai/dsh-client-ui-context-menu"
       ]
     }
+  },
+  "devDependencies": {
+    "jsdom": "^31.0.1"
   }
 }

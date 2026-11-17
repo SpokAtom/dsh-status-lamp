@@ -132,8 +132,11 @@ The hold is released as soon as DSH reports the session as running, so the mark 
 ### 4. Hide archived and on-hold sessions
 
 1. Click the **sliders icon** in the "Workspaces" header to open the view options.
-2. The **Filter sessions** section has a new first item: **Hide archived and on hold**.
-3. Click it once: archived and on-hold rows disappear. Click again: they come back.
+2. The **Filter sessions** section has two plugin rows:
+   - first row: **Hide archived and on hold** — click once to hide archived rows and on-hold rows, click again to restore;
+   - last row: **Show only on hold** — click once to keep only on-hold sessions, click again to restore.
+3. Picking a shipped filter (e.g. *Hide archived*, *Only archived*) clears the plugin's own mode, so the two filters never stack.
+4. The shipped *All conversations (show archived)* label is tidied to *All conversations*.
 
 ![The Filter sessions section with the new first item (illustration)](docs/filter-menu-en.svg)
 
@@ -189,6 +192,7 @@ client.js              all logic: two row seats, hold menu action, filter row
 cordis.patch.yml       bundle patch inserting the status-lamp row
 locale/{zh,en}.json    Plugin Manager title and description
 test/smoke.mjs         node:vm smoke test (npm test)
+test/integration.mjs   jsdom integration test for the injected menu rows
 docs/                  bilingual diagrams
 DESIGN.md              design notes and trade-offs
 ```
