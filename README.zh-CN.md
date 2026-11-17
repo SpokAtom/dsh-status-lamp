@@ -28,9 +28,40 @@ DSH 对空闲会话的行首什么都不画，归档行的行首也是空白—�
 
 ## 状态机
 
-![状态机](docs/state-machine.png)
+下面的图 GitHub 会直接渲染；npm 页面不渲染 Mermaid，会显示成代码块，可看静态图 `docs/state-machine.png`（亮色）或 `docs/state-machine-dark.png`（暗色）。
 
-完整迁移与条件见 [docs/STATE-MACHINE.md](docs/STATE-MACHINE.md)（Mermaid，GitHub 直接渲染）。静态图另有暗色版：`docs/state-machine-dark.png`。
+```mermaid
+stateDiagram-v2
+    direction TB
+
+    classDef idle fill:#e8f0fe,stroke:#2f6feb,stroke-width:1.5px,color:#1f2328
+    classDef hold fill:#fdf4e3,stroke:#d99a2b,stroke-width:1.5px,color:#1f2328
+    classDef archive fill:#eef0f3,stroke:#8b8f98,stroke-width:1.5px,color:#1f2328
+    classDef native fill:#f5f7fb,stroke:#8fa3c8,stroke-width:1.5px,color:#1f2328
+
+    state "空闲（蓝点）" as Idle
+    state "原生状态（运行 / 待审批 / 未读）" as Native
+    state "已挂起（灰空心）" as OnHold
+    state "已归档（灰实心）" as Archived
+
+    class Idle idle
+    class OnHold hold
+    class Archived archive
+    class Native native
+
+    Idle --> Native: ①运行/审批/未读
+    OnHold --> Native: ①同上（清标记）
+    Native --> Idle: ②跑完/已读/审批完成
+    Idle --> OnHold: ③挂起（手动或 ≥5 天）
+    OnHold --> Idle: ④取消挂起
+    Idle --> Archived: ⑤归档
+    OnHold --> Archived: ⑥归档（保留标记）
+    Archived --> Idle: ⑦解除归档：无标记且 <5 天
+    Archived --> OnHold: ⑧解除归档：有标记或 ≥5 天
+    Archived --> Native: ⑨解除归档：运行中/未读
+```
+
+颜色：蓝 = 空闲、琥珀 = 已挂起、灰 = 已归档、淡蓝灰 = 原生状态（插件不接管）。
 
 ## 判定顺序
 

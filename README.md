@@ -28,9 +28,40 @@ Native **pending / running / unread** keep their own lamps. Holding never covers
 
 ## State machine
 
-![State machine](docs/state-machine-en.png)
+GitHub renders the diagram below; npm shows it as a code block, where the static image `docs/state-machine-en.png` (light) or `docs/state-machine-en-dark.png` (dark) is the readable version.
 
-Every transition with its condition lives in [docs/STATE-MACHINE.md](docs/STATE-MACHINE.md) (Mermaid, rendered by GitHub). Static images: `docs/state-machine-en.png` (light), `docs/state-machine-en-dark.png` (dark).
+```mermaid
+stateDiagram-v2
+    direction TB
+
+    classDef idle fill:#e8f0fe,stroke:#2f6feb,stroke-width:1.5px,color:#1f2328
+    classDef hold fill:#fdf4e3,stroke:#d99a2b,stroke-width:1.5px,color:#1f2328
+    classDef archive fill:#eef0f3,stroke:#8b8f98,stroke-width:1.5px,color:#1f2328
+    classDef native fill:#f5f7fb,stroke:#8fa3c8,stroke-width:1.5px,color:#1f2328
+
+    state "Idle (blue dot)" as Idle
+    state "Native (running / pending / unread)" as Native
+    state "On hold (hollow ring)" as OnHold
+    state "Archived (solid dot)" as Archived
+
+    class Idle idle
+    class OnHold hold
+    class Archived archive
+    class Native native
+
+    Idle --> Native: 1 run / approval / unread
+    OnHold --> Native: 1 same, clears mark
+    Native --> Idle: 2 finished / read / approved
+    Idle --> OnHold: 3 Hold (manual or >= 5 days)
+    OnHold --> Idle: 4 Resume
+    Idle --> Archived: 5 Archive
+    OnHold --> Archived: 6 Archive (mark kept)
+    Archived --> Idle: 7 Unarchive: no mark and < 5 days
+    Archived --> OnHold: 8 Unarchive: mark or >= 5 days
+    Archived --> Native: 9 Unarchive: running / unread
+```
+
+Colour key: blue = idle, amber = on hold, grey = archived, pale blue-grey = native states (the plugin stays out).
 
 ## Decision order
 
