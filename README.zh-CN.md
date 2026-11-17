@@ -85,7 +85,7 @@ dsh plugin --profile desktop add "D:\path\to\dsh-status-lamp"
 
 ```js
 // client.js
-const AUTO_PARK_MS = 5 * 24 * 60 * 60 * 1000; // 改成 7 天：7 * 24 * ...
+const AUTO_HOLD_MS = 5 * 24 * 60 * 60 * 1000; // 改成 7 天：7 * 24 * ...
 ```
 
 ### 3. 运行中的会话永远不会是挂起态
@@ -112,7 +112,7 @@ DSH 一旦报告会话在运行，挂起标记就被解除，所以灯不会和�
 |---|---|---|
 | 挂起标记 / 唤醒时刻 | 浏览器 `localStorage` → `dsh.status-lamp.parked.v2` | `{ "explicit": ["会话ID"], "awake": { "会话ID": 时间戳 } }` |
 | 过滤开关 | 浏览器 `localStorage` → `dsh.status-lamp.filter.v1` | `hide` 或 `show` |
-| 阈值 | `client.js` 的 `AUTO_PARK_MS` | 修改后重新安装 |
+| 阈值 | `client.js` 的 `AUTO_HOLD_MS` | 修改后重新安装 |
 
 清空所有手动标记：
 

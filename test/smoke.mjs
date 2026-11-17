@@ -4,7 +4,7 @@
  * The plugin ships as a single plain-JS browser module (no build step), so this
  * harness evaluates it inside `node:vm` with a minimal fake browser: enough DOM,
  * storage and Cordis surface to run `apply`, register the seats/menu action, and
- * exercise the suspend/resume round trip. It intentionally does not render React or
+ * exercise the hold/resume round trip. It intentionally does not render React or
  * the view-options menu; those are verified in the running app.
  */
 import assert from 'node:assert/strict';
@@ -203,36 +203,36 @@ const registeredIds = registrations.map((entry) => entry.options.id).sort();
 assert.deepEqual(registeredIds, ['status-lamp', 'status-lamp-archive'], 'unexpected row seats');
 
 const action = menuActions[0];
-assert.ok(action, 'suspend menu action was not registered');
-assert.equal(action.id, 'status-lamp.suspend');
+assert.ok(action, 'hold menu action was not registered');
+assert.equal(action.id, 'status-lamp.hold');
 assert.equal(action.target, 'session');
 
 const first = action.resolve({ sessionId: 'session-1' });
 assert.equal(first.length, 1);
-assert.equal(first[0].id, 'suspend', 'a fresh session should offer suspend');
+assert.equal(first[0].id, 'hold', 'a fresh session should offer a hold');
 first[0].run();
 
-const stored = JSON.parse(storage.get('dsh.status-lamp.suspended.v3'));
-assert.deepEqual(stored.explicit, ['session-1'], 'suspend mark was not persisted');
+const stored = JSON.parse(storage.get('dsh.status-lamp.hold.v1'));
+assert.deepEqual(stored.explicit, ['session-1'], 'hold mark was not persisted');
 assert.equal(stored.awake['session-1'], undefined);
 
 const second = action.resolve({ sessionId: 'session-1' });
-assert.equal(second[0].id, 'resume', 'a suspended session should offer resume');
+assert.equal(second[0].id, 'resume', 'an on-hold session should offer resume');
 second[0].run();
-const afterResume = JSON.parse(storage.get('dsh.status-lamp.suspended.v3'));
+const afterResume = JSON.parse(storage.get('dsh.status-lamp.hold.v1'));
 assert.deepEqual(afterResume.explicit, [], 'resume should clear the explicit mark');
 
-// Suspend again, then let the Host report the Session as running: the mark must go.
+// Hold again, then let the Host report the Session as running: the mark must go.
 const third = action.resolve({ sessionId: 'session-1' });
-assert.equal(third[0].id, 'suspend');
+assert.equal(third[0].id, 'hold');
 third[0].run();
 emitList({ ids: ['session-1'], byId: { 'session-1': { running: true } } });
-const afterRunning = JSON.parse(storage.get('dsh.status-lamp.suspended.v3'));
-assert.deepEqual(afterRunning.explicit, [], 'a running Session must release its suspend mark');
-assert.equal(action.resolve({ sessionId: 'session-1' }).length, 0, 'running Sessions offer no suspend action');
+const afterRunning = JSON.parse(storage.get('dsh.status-lamp.hold.v1'));
+assert.deepEqual(afterRunning.explicit, [], 'a running Session must release its hold mark');
+assert.equal(action.resolve({ sessionId: 'session-1' }).length, 0, 'running Sessions offer no hold action');
 
 emitList({ ids: ['session-1'], byId: { 'session-1': { running: false } } });
-assert.equal(action.resolve({ sessionId: 'session-1' })[0].id, 'suspend', 'an idle Session can be suspended again');
+assert.equal(action.resolve({ sessionId: 'session-1' })[0].id, 'hold', 'an idle Session can be put on hold again');
 
 assert.ok(localeDicts !== null, 'locale dictionaries were not registered');
 const zhKeys = Object.keys(localeDicts.zh).sort();
@@ -243,7 +243,7 @@ const filterCss = styleTags.map((tag) => tag.textContent).find((text) => /data-s
 assert.ok(filterCss, 'filter stylesheet was not injected');
 assert.match(filterCss, /data-row-key\^="session:"/, 'filter stylesheet must target session rows');
 assert.match(filterCss, /_archived/, 'filter stylesheet must target archived rows');
-assert.match(filterCss, /suspended/, 'filter stylesheet must target suspended rows');
+assert.match(filterCss, /hold/, 'filter stylesheet must target hold rows');
 
 assert.equal(rootAttributes.get('data-status-lamp-filter'), 'show');
 assert.ok(localeListeners.length > 0, 'locale change listener was not installed');
@@ -252,8 +252,8 @@ for (const cleanup of cleanups) cleanup();
 
 console.log('PASS seats:', registeredIds.join(', '));
 console.log('PASS menu action:', action.id);
-console.log('PASS suspend/resume round trip and persistence');
-console.log('PASS running Session releases its suspend mark');
+console.log('PASS hold/resume round trip and persistence');
+console.log('PASS running Session releases its hold mark');
 console.log('PASS zh/en dictionary key parity:', zhKeys.length, 'keys');
 console.log('PASS filter stylesheet and root attribute');
 console.log('PASS locale listener installed');

@@ -4,7 +4,7 @@
 
 ## 1.1.3 — 未发布（本地）
 
-- 术语统一：英文 UI 由 `Parked/Park/Unpark` 改为 **`Suspended/Suspend session/Resume session`**（挂起的标准英文）；存储键迁移到 `dsh.status-lamp.suspended.v3`，仍兼容读取旧 `parked.v2` / `parked.v1`。
+- 术语统一：英文 UI 用 **`On hold`（状态）/ `Hold session`、`Resume session`（按钮）**——形容词与动词成对、业界通用（Jira `On hold`、电话 `call on hold`），避开 parked/suspended/paused 的歧义；存储键迁移到 `dsh.status-lamp.hold.v1`，仍兼容读取 `suspended.v3` / `parked.v2` / `parked.v1`。
 - 语义修正：**挂起即空闲细分**，会话一旦恢复运行就**自动解除挂起**（显式标记与唤醒记录一并清除）；运行中的会话不再提供挂起菜单项。
 - 代码质量：过滤行注入全链路加 try/catch 与更短重试；语言切换时重建注入行；启动/会话列表变化时清理失效挂起标记（快照未就绪时不再清空标记）；时钟从 1 分钟放宽到 5 分钟。
 - 测试：`test/smoke.mjs` 覆盖「运行即解除挂起」，7 项断言全过。

@@ -8,8 +8,8 @@
  * not express:
  *
  * - idle     → blue filled 6px dot (the native lamp renders nothing)
- * - suspended   → hollow grey 6px ring; suspended is either an explicit mark or
- *              automatic after AUTO_SUSPEND_MS without conversation activity
+ * - on hold   → hollow grey 6px ring; an on-hold row is either an explicit mark or
+ *              automatic after AUTO_HOLD_MS without conversation activity
  * - archived → solid grey 6px dot (native archived rows keep the cell blank,
  *              so the mark renders in the trailing seat instead)
  *
@@ -24,21 +24,21 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
 
     const NS = 'status.lamp';
-    const STORAGE_KEY = 'dsh.status-lamp.suspended.v3';
+    const STORAGE_KEY = 'dsh.status-lamp.hold.v1';
     /** Older keys, newest first: the v2 object shape, then the v1 id array. */
-    const LEGACY_STORAGE_KEYS = ['dsh.status-lamp.parked.v2', 'dsh.status-lamp.parked.v1'];
-    /** A session with no conversation activity for this long suspends by itself. */
-    const AUTO_SUSPEND_MS = 5 * 24 * 60 * 60 * 1000;
+    const LEGACY_STORAGE_KEYS = ['dsh.status-lamp.holded.v3', 'dsh.status-lamp.parked.v2', 'dsh.status-lamp.parked.v1'];
+    /** A session with no conversation activity for this long holds by itself. */
+    const AUTO_HOLD_MS = 5 * 24 * 60 * 60 * 1000;
     /** Re-evaluate relative times every five minutes; a five-day bar needs no finer grain. */
     const CLOCK_MS = 5 * 60 * 1000;
 
     /** Simplified Chinese dictionary (key-set source of truth). */
     const zh = {
       'state.idle': '空闲',
-      'state.suspended': '已挂起',
-      'state.suspended.auto': '已挂起 · 5 天无对话',
+      'state.hold': '已挂起',
+      'state.hold.auto': '已挂起 · 5 天无对话',
       'state.archived': '已归档',
-      'menu.suspend': '挂起会话',
+      'menu.hold': '挂起会话',
       'menu.resume': '取消挂起',
       'filter.label': '隐藏已归档及挂起',
       'filter.tip.on': '已开启：点击显示归档和挂起的会话',
@@ -46,21 +46,21 @@ window.__ModuleLoader__.load({
     };
     const en = {
       'state.idle': 'Idle',
-      'state.suspended': 'Suspended',
-      'state.suspended.auto': 'Suspended · 5 days quiet',
+      'state.hold': 'On hold',
+      'state.hold.auto': 'On hold · 5 days quiet',
       'state.archived': 'Archived',
-      'menu.suspend': 'Suspend session',
+      'menu.hold': 'Hold session',
       'menu.resume': 'Resume session',
-      'filter.label': 'Hide archived and suspended',
-      'filter.tip.on': 'On — click to show archived and suspended sessions',
-      'filter.tip.off': 'Off — click to hide archived and suspended sessions',
+      'filter.label': 'Hide archived and on hold',
+      'filter.tip.on': 'On — click to show archived and on-hold sessions',
+      'filter.tip.off': 'Off — click to hide archived and on-hold sessions',
     };
 
     // ---------------------------------------------------------------- store --
     // `explicit` holds user-marked sessions. `awake` remembers the Session's
     // updatedAt at the moment the user woke it, so the five-day rule does not
-    // immediately re-suspend a session the user just resumed.
-    /** A fresh empty suspended state; each read returns new containers for reference comparison. */
+    // immediately re-hold a session the user just resumed.
+    /** A fresh empty hold state; each read returns new containers for reference comparison. */
     const emptyState = () => ({ explicit: new Set(), awake: new Map() });
 
     /** Coerce any persisted shape (object or legacy id array) into containers. */
@@ -109,8 +109,8 @@ window.__ModuleLoader__.load({
       for (const listener of [...storeListeners]) listener();
     }
 
-    /** The shared suspended-set source: row seats read it, the menu action writes it. */
-    const suspendedStore = {
+    /** The shared hold-set source: row seats read it, the menu action writes it. */
+    const holdStore = {
       getSnapshot: () => stored,
       subscribe: (listener) => {
         storeListeners.add(listener);
@@ -118,7 +118,7 @@ window.__ModuleLoader__.load({
           storeListeners.delete(listener);
         };
       },
-      suspend(sessionId) {
+      hold(sessionId) {
         const next = { explicit: new Set(stored.explicit), awake: new Map(stored.awake) };
         next.explicit.add(sessionId);
         next.awake.delete(sessionId);
@@ -154,7 +154,7 @@ window.__ModuleLoader__.load({
         publish({ explicit, awake });
       },
       /**
-       * Suspension ends the moment a Session runs again: clear its explicit mark and
+       * Holding ends the moment a Session runs again: clear its explicit mark and
        * wake record so the row returns to the plain idle/native state.
        */
       releaseRunning(runningIds) {
@@ -203,14 +203,14 @@ window.__ModuleLoader__.load({
     })();
 
     // ------------------------------------------------------------- deriving --
-    /** Why a session is suspended: 'manual', 'auto', or null when it is awake. */
-    function suspendedBy(snapshot, sessionId, row, now) {
-      // A running Session is by definition not suspended: running releases the mark.
+    /** Why a session is on hold: 'manual', 'auto', or null when it is awake. */
+    function holdBy(snapshot, sessionId, row, now) {
+      // A running Session is by definition not on hold: running releases the mark.
       if (row !== undefined && row.running === true) return null;
       if (snapshot.explicit.has(sessionId)) return 'manual';
       if (row === undefined || row.blank === true) return null;
       if (row.updatedAt <= 0) return null;
-      if (now - row.updatedAt < AUTO_SUSPEND_MS) return null;
+      if (now - row.updatedAt < AUTO_HOLD_MS) return null;
       const wokeAt = snapshot.awake.get(sessionId);
       if (typeof wokeAt === 'number' && wokeAt >= row.updatedAt) return null;
       return 'auto';
@@ -223,7 +223,7 @@ window.__ModuleLoader__.load({
       borderRadius: '50%',
       background: 'var(--dsw-static-blue-500)',
     };
-    const SUSPENDED_RING = {
+    const HOLD_RING = {
       display: 'block',
       width: 6,
       height: 6,
@@ -270,28 +270,28 @@ window.__ModuleLoader__.load({
 
     /**
      * Leading seat occupant: mounted by the row only while its primary state is
-     * idle, so it draws the suspended ring when marked (explicitly or by the five-day
+     * idle, so it draws the on hold ring when marked (explicitly or by the five-day
      * rule) and the blue idle dot otherwise.
      *
      * @param props.sessionId - Session this row shows.
-     * @param props.suspendedStore - Shared suspended-set source.
+     * @param props.holdStore - Shared hold-set source.
      * @param props.useSessions - Session list selector hook.
      * @param props.t - Locale seat for this plugin's namespace.
      */
-    function IdleStateLamp({ sessionId, suspendedStore, useSessions, t }) {
+    function IdleStateLamp({ sessionId, holdStore, useSessions, t }) {
       const row = useSessions((list) => {
         const summary = list.byId[sessionId];
         if (summary === undefined) return undefined;
         return `${typeof summary.updatedAt === 'number' ? summary.updatedAt : 0}|${summary.blank === true ? 'b' : ''}`;
       });
-      const snapshot = React.useSyncExternalStore(suspendedStore.subscribe, suspendedStore.getSnapshot);
+      const snapshot = React.useSyncExternalStore(holdStore.subscribe, holdStore.getSnapshot);
       const now = React.useSyncExternalStore(clock.subscribe, clock.getSnapshot);
 
       const parsed = row === undefined ? undefined : { updatedAt: Number(row.split('|')[0]), blank: row.endsWith('|b') };
       if (parsed !== undefined && !Number.isFinite(parsed.updatedAt)) parsed.updatedAt = 0;
-      const reason = suspendedBy(snapshot, sessionId, parsed, now);
-      if (reason === 'auto') return lampFrame('suspended-auto', t('state.suspended.auto'), SUSPENDED_RING);
-      if (reason === 'manual') return lampFrame('suspended', t('state.suspended'), SUSPENDED_RING);
+      const reason = holdBy(snapshot, sessionId, parsed, now);
+      if (reason === 'auto') return lampFrame('hold-auto', t('state.hold.auto'), HOLD_RING);
+      if (reason === 'manual') return lampFrame('hold', t('state.hold'), HOLD_RING);
       return lampFrame('idle', t('state.idle'), IDLE_DOT);
     }
 
@@ -313,7 +313,7 @@ window.__ModuleLoader__.load({
     // The view-options dropdown belongs to ui-workspace and exposes no slot, so
     // this is a DOM-level enhancement: every time that menu opens, one extra row
     // is cloned from a shipped item and inserted at its top. The row toggles a
-    // stylesheet rule that hides suspended and archived session rows. Everything
+    // stylesheet rule that hides on-hold and archived session rows. Everything
     // fails open — no menu found, no rule matched, no hiding — and the shipped UI
     // keeps working unchanged.
     const FILTER_KEY = 'dsh.status-lamp.filter.v1';
@@ -332,13 +332,13 @@ window.__ModuleLoader__.load({
       '="hide"] [data-row-key^="session:"][class*="_archived"],' +
       'html[' +
       FILTER_ATTR +
-      '="hide"] [data-row-key^="session:"]:has([data-status-lamp="suspended"]),' +
+      '="hide"] [data-row-key^="session:"]:has([data-status-lamp="hold"]),' +
       'html[' +
       FILTER_ATTR +
-      '="hide"] [data-row-key^="session:"]:has([data-status-lamp="suspended-auto"]){' +
+      '="hide"] [data-row-key^="session:"]:has([data-status-lamp="hold-auto"]){' +
       'display:none !important}';
 
-    /** Persisted filter mode: 'hide' hides suspended + archived rows, 'show' keeps them. */
+    /** Persisted filter mode: 'hide' hides on hold + archived rows, 'show' keeps them. */
     function readFilterMode() {
       try {
         return window.localStorage.getItem(FILTER_KEY) === 'hide' ? 'hide' : 'show';
@@ -357,7 +357,7 @@ window.__ModuleLoader__.load({
     const inject = ['slots', 'locale', 'contextMenus', 'sessions'];
 
     /**
-     * Register the dictionaries, the two row seats and the suspend menu action.
+     * Register the dictionaries, the two row seats and the hold menu action.
      * @param ctx - Client Cordis context.
      */
     function apply(ctx) {
@@ -384,7 +384,7 @@ window.__ModuleLoader__.load({
             order: 0,
             label: () => t('state.idle'),
             locale: NS,
-            inject: () => ({ suspendedStore }),
+            inject: () => ({ holdStore }),
           },
           IdleStateLamp,
         ),
@@ -406,31 +406,31 @@ window.__ModuleLoader__.load({
       ctx.effect(
         () =>
           ctx.contextMenus.register({
-            id: 'status-lamp.suspend',
+            id: 'status-lamp.hold',
             target: 'session',
             order: 550,
             resolve: ({ sessionId }) => {
               const row = rowOf(sessionId);
-              // A running Session cannot stay suspended: running always releases the
-              // mark, so offering suspend/resume here would be misleading.
+              // A running Session cannot stay on hold: running always releases the
+              // mark, so offering hold/resume here would be misleading.
               if (row !== undefined && row.running) return [];
               // Same clock the row seats read, so the menu and the lamp never
               // disagree about the five-day boundary by an instant.
-              const reason = suspendedBy(suspendedStore.getSnapshot(), sessionId, row, clock.getSnapshot());
+              const reason = holdBy(holdStore.getSnapshot(), sessionId, row, clock.getSnapshot());
               return [
                 {
-                  id: reason === null ? 'suspend' : 'resume',
-                  label: t(reason === null ? 'menu.suspend' : 'menu.resume'),
+                  id: reason === null ? 'hold' : 'resume',
+                  label: t(reason === null ? 'menu.hold' : 'menu.resume'),
                   run: () => {
-                    if (reason === null) suspendedStore.suspend(sessionId);
-                    else suspendedStore.resume(sessionId, row?.updatedAt);
-                    suspendedStore.prune(ctx.sessions.list.getSnapshot().ids);
+                    if (reason === null) holdStore.hold(sessionId);
+                    else holdStore.resume(sessionId, row?.updatedAt);
+                    holdStore.prune(ctx.sessions.list.getSnapshot().ids);
                   },
                 },
               ];
             },
           }),
-        'status-lamp: suspend menu action',
+        'status-lamp: hold menu action',
       );
 
       // ---- view-options filter row (DOM-level, see the constants above) ----
@@ -456,7 +456,7 @@ window.__ModuleLoader__.load({
 
       /**
        * Flip the filter mode: persist it, repaint the row, and let the stylesheet
-       * attribute hide or show suspended and archived rows.
+       * attribute hide or show on-hold and archived rows.
        */
       const toggleFilter = () => {
         filterMode = filterMode === 'hide' ? 'show' : 'hide';
@@ -651,14 +651,14 @@ window.__ModuleLoader__.load({
             const ids = Array.isArray(snapshot.ids) ? snapshot.ids : [];
             if (!pruned && ids.length > 0) {
               pruned = true;
-              suspendedStore.prune(ids);
+              holdStore.prune(ids);
             }
             const running = new Set();
             const byId = snapshot.byId === undefined ? {} : snapshot.byId;
             for (const id of ids) if (byId[id]?.running === true) running.add(id);
-            suspendedStore.releaseRunning(running);
+            holdStore.releaseRunning(running);
           } catch (error) {
-            console.warn('[dsh-status-lamp] suspend mark reconcile failed', error);
+            console.warn('[dsh-status-lamp] hold mark reconcile failed', error);
           }
         };
         reconcile();
@@ -667,7 +667,7 @@ window.__ModuleLoader__.load({
         return () => {
           if (typeof off === 'function') off();
         };
-      }, 'status-lamp: reconcile suspended marks');
+      }, 'status-lamp: reconcile hold marks');
     }
 
     return { inject, apply };
