@@ -68,4 +68,11 @@ stateDiagram-v2
     Archived --> Native: 9 unarchive while running / pending / unread
 ```
 
-Static images: `docs/state-machine.png` (light), `docs/state-machine-dark.png` (dark), vector sources `docs/state-machine.svg` / `docs/state-machine-dark.svg`.
+Static images (same geometry, two languages and two themes):
+
+| Language | Light | Dark |
+|---|---|---|
+| 中文 | `docs/state-machine.png` | `docs/state-machine-dark.png` |
+| English | `docs/state-machine-en.png` | `docs/state-machine-en-dark.png` |
+
+Vector sources: `docs/state-machine.svg`, `docs/state-machine-dark.svg`, `docs/state-machine-en.svg`, `docs/state-machine-en-dark.svg`.

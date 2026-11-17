@@ -52,42 +52,37 @@
   <text x="464" y="742" font-size="17" font-weight="600" fill="#1f2328">已归档</text>
   <text x="464" y="764" font-size="12" fill="#6b7280">Archived · 灰实心</text>
 
-  <!-- ① idle -> native, ② native -> idle (separate lanes, no crossing) -->
+  <!-- edges -->
   <path d="M 215 380 V 330 H 360 V 250" fill="none" stroke="#2f6feb" stroke-width="2" marker-end="url(#arrBlue)"/>
   <text x="226" y="318" font-size="12" fill="#2f6feb" paint-order="stroke" stroke="#ffffff" stroke-width="5">①开始运行 / 待审批 / 未读</text>
 
   <path d="M 470 250 V 360 H 280 V 378" fill="none" stroke="#2f6feb" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrBlue)"/>
   <text x="300" y="352" font-size="12" fill="#2f6feb" paint-order="stroke" stroke="#ffffff" stroke-width="5">②跑完无未读 / 已读 / 审批完成</text>
 
-  <!-- ① hold -> native -->
   <path d="M 805 380 V 330 H 650 V 250" fill="none" stroke="#2f6feb" stroke-width="2" marker-end="url(#arrBlue)"/>
   <text x="662" y="318" font-size="12" fill="#2f6feb" paint-order="stroke" stroke="#ffffff" stroke-width="5">①同上，清挂起标记</text>
 
-  <!-- ③ idle -> hold, ④ hold -> idle -->
   <path d="M 320 410 H 698" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#arr)"/>
   <text x="404" y="398" font-size="12" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="5">③挂起会话 或 ≥5 天自动</text>
 
   <path d="M 700 450 H 322" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#arr)"/>
   <text x="418" y="470" font-size="12" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="5">④取消挂起</text>
 
-  <!-- ⑤ idle -> archived, ⑥ hold -> archived -->
   <path d="M 215 476 V 610 H 442 V 698" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#arr)"/>
   <text x="228" y="600" font-size="12" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="5">⑤归档</text>
 
   <path d="M 805 476 V 610 H 572 V 698" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#arr)"/>
   <text x="818" y="600" font-size="12" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="5">⑥归档（标记保留）</text>
 
-  <!-- ⑦ archived -> idle, ⑧ archived -> hold, ⑨ archived -> native -->
   <path d="M 400 760 H 150 V 478" fill="none" stroke="#8a8f98" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrRelease)"/>
-  <text x="168" y="748" font-size="12" fill="#6b7280" paint-order="stroke" stroke="#ffffff" stroke-width="5">⑦解除归档 ∧ 无标记 ∧ &lt;5 天</text>
+  <text x="168" y="748" font-size="12" fill="#6b7280" paint-order="stroke" stroke="#ffffff" stroke-width="5">⑦解除归档 ∧ 无标记 ∧ <5 天</text>
 
   <path d="M 610 760 H 860 V 478" fill="none" stroke="#8a8f98" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrRelease)"/>
-  <text x="622" y="748" font-size="12" fill="#6b7280" paint-order="stroke" stroke="#ffffff" stroke-width="5">⑧解除归档 ∧（标记 ∨ ≥5 天）</text>
+  <text x="600" y="736" font-size="12" fill="#6b7280" paint-order="stroke" stroke="#ffffff" stroke-width="5">⑧解除归档 ∧（标记 ∨ ≥5 天）</text>
 
   <path d="M 610 790 H 950 V 160 H 672" fill="none" stroke="#8a8f98" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrRelease)"/>
   <text x="700" y="148" font-size="12" fill="#6b7280" paint-order="stroke" stroke="#ffffff" stroke-width="5">⑨解除归档时正在运行 / 待审批 / 未读</text>
 
-  <!-- legend -->
   <rect x="36" y="846" width="928" height="44" rx="10" fill="#f5f7fb" stroke="#d8dee9"/>
   <text x="56" y="874" font-size="12" fill="#6b7280">实线 = 用户动作或活动触发　虚线 = 解除归档后的重新判定　蓝 = 原生状态迁移　灰 = 挂起 / 归档迁移　①–⑨ = 边上的条件</text>
 </svg>
