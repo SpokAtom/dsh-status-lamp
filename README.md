@@ -4,7 +4,7 @@ A **status light (status indicator)** for the session rows in the DeepSeek Harne
 
 English | [简体中文](README.zh-CN.md)
 
-![The three lamps](docs/legend-en.png)
+![The three lamps](docs/legend-en.svg)
 
 ## What it adds
 
@@ -135,7 +135,7 @@ The hold is released as soon as DSH reports the session as running, so the mark 
 2. The **Filter sessions** section has a new first item: **Hide archived and on hold**.
 3. Click it once: archived and on-hold rows disappear. Click again: they come back.
 
-![The Filter sessions section with the new first item (illustration)](docs/filter-menu-en.png)
+![The Filter sessions section with the new first item (illustration)](docs/filter-menu-en.svg)
 
 The switch lives in browser local storage and survives restarts.
 

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="232" viewBox="0 0 680 232" font-family="Segoe UI, Microsoft YaHei, sans-serif">
+  <defs>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+  <rect x="10" y="10" width="660" height="212" rx="14" fill="#fbfbfd" stroke="#dfe3ea" filter="url(#sh)"/>
+  <text x="40" y="48" font-size="14" fill="#6b7280">Filter sessions</text>
+
+  <rect x="24" y="70" width="632" height="58" rx="10" fill="#eef2ff" stroke="#2f6feb" stroke-width="1.5"/>
+  <g stroke="#5a6472" stroke-width="2" fill="none">
+    <ellipse cx="58" cy="99" rx="12" ry="7"/>
+    <circle cx="58" cy="99" r="3" fill="#5a6472" stroke="none"/>
+    <line x1="50" y1="106" x2="66" y2="92"/>
+  </g>
+  <text x="88" y="105" font-size="17" fill="#1f2328">Hide archived and on hold</text>
+
+  <g stroke="#8a909a" stroke-width="2" fill="none">
+    <rect x="50" y="160" width="16" height="11" rx="2"/>
+    <path d="M50 163 L58 158 L66 163"/>
+  </g>
+  <text x="88" y="172" font-size="17" fill="#1f2328">Hide archived</text>
+
+  <text x="560" y="105" font-size="13" fill="#6b7280">↑ new item</text>
+</svg>
