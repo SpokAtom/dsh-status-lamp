@@ -141,10 +141,14 @@ const nativeButtons = nativeLabels.map((text, index) => {
   const label = window.document.createElement('span');
   label.className = 'itemLabel_hash';
   label.textContent = text;
-  const check = window.document.createElement('span');
-  check.className = '_check_hash';
-  check.textContent = '✓';
-  button.append(icon, label, check);
+  button.append(icon, label);
+  if (index === 2) {
+    // Only the shipped selected row carries a check mark, like the real menu.
+    const check = window.document.createElement('span');
+    check.className = '_check_hash';
+    check.textContent = '✓';
+    button.appendChild(check);
+  }
   const rect = { width: 200, height: 30, top: 130 + index * 30, left: 0, right: 200, bottom: 160 + index * 30 };
   button.__rect = rect;
   wrapper.__rect = rect;
@@ -156,6 +160,7 @@ const nativeButtons = nativeLabels.map((text, index) => {
 
 // Simulate a persisted shipped filter that is not the default ("only archived").
 nativeButtons[2].classList.add('_selected_hash');
+nativeWrappers[2].classList.add('_selected_hash_wrap');
 let defaultClicks = 0;
 nativeButtons[1].addEventListener('click', () => {
   defaultClicks += 1;
@@ -181,6 +186,8 @@ const archivedRow = rowFor('archived');
 assert.ok(holdRow, 'on-hold checkbox missing');
 assert.ok(archivedRow, 'archived checkbox missing');
 assert.equal(holdRow.textContent.includes('已挂起'), true, 'on-hold label is wrong');
+assert.ok(holdRow.querySelector('[class*="_check"]'), 'injected row must carry the shipped check mark');
+assert.ok(archivedRow.querySelector('[class*="_check"]'), 'injected row must carry the shipped check mark');
 assert.equal(archivedRow.textContent.includes('已归档'), true, 'archived label is wrong');
 
 // The shipped rows are hidden: the section is now exactly two checkboxes.
@@ -218,6 +225,8 @@ assert.equal(attr(), 'hold');
 assert.deepEqual(stored(), ['hold']);
 assert.equal(checked(holdRow), true);
 assert.equal(checked(archivedRow), false);
+assert.equal(holdRow.classList.contains('_selected_hash'), true, 'checked row must borrow the shipped selected paint');
+assert.equal(rowWrapper(holdRow).classList.contains('_selected_hash_wrap'), true, 'checked row wrapper must borrow the shipped selected paint');
 
 // Check "Archived" as well: both groups are shown, still additive.
 click(archivedRow);
@@ -230,6 +239,7 @@ click(holdRow);
 assert.equal(attr(), 'archived');
 assert.deepEqual(stored(), ['archived']);
 assert.equal(checked(holdRow), false);
+assert.equal(holdRow.classList.contains('_selected_hash'), false, 'unchecked row must drop the selected paint');
 
 // Unchecking the last group returns to "hide both".
 click(archivedRow);

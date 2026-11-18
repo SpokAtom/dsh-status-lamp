@@ -6,9 +6,11 @@
   </defs>
   <rect x="10" y="10" width="660" height="208" rx="14" fill="#fbfbfd" stroke="#dfe3ea" filter="url(#sh)"/>
   <text x="36" y="44" font-size="14" fill="#6b7280">筛选会话</text>
-  <rect x="44" y="70" width="20" height="20" rx="5" fill="#2f6feb"/><path d="M49 80.5 L53 84.5 L59 76.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="88" y="87" font-size="17" fill="#1f2328">已挂起</text>
-  <rect x="44" y="124" width="20" height="20" rx="5" fill="#fff" stroke="#b6bcc6" stroke-width="2"/>
-  <text x="88" y="141" font-size="17" fill="#1f2328">已归档</text>
+  <rect x="18" y="64" width="644" height="46" rx="9" fill="#eef2ff"/><circle cx="46" cy="87" r="7.5" fill="none" stroke="#4a5568" stroke-width="2"/>
+  <text x="76" y="93" font-size="17" fill="#1f2328">已挂起</text>
+  <path d="M620 87 L624.5 91.5 L632.5 82" fill="none" stroke="#2f6feb" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="46" cy="141" r="8.5" fill="#4a5568"/>
+  <text x="76" y="147" font-size="17" fill="#1f2328">已归档</text>
+  
   <text x="36" y="194" font-size="12.5" fill="#6b7280">都不勾选 = 只显示其他会话；勾选哪个就额外显示哪一组</text>
 </svg>

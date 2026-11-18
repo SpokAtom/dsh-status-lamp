@@ -327,9 +327,9 @@ window.__ModuleLoader__.load({
     const FILTER_STYLE_ID = 'dsh-status-lamp-filter-css';
     const SHOW_TOKENS = ['hold', 'archived'];
     const HOLD_ICON =
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/></svg>';
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="6.6"/></svg>';
     const ARCHIVED_ICON =
-      '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/></svg>';
+      '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="7.5" fill="currentColor"/></svg>';
     /**
      * Neither token present hides the matching rows. The attribute is always set
      * (possibly empty), and `[attr~="token"]` treats "hold archived" as two tokens.
@@ -500,6 +500,23 @@ window.__ModuleLoader__.load({
         if (iconHost !== null && iconHost.innerHTML !== icon) iconHost.innerHTML = icon;
         const labelHost = node.querySelector('[class*="itemLabel"]');
         if (labelHost !== null && labelHost.textContent !== label) labelHost.textContent = label;
+        let selectedClasses = [];
+        try {
+          selectedClasses = JSON.parse(node.dataset.statusLampSelectedClasses ?? '[]');
+        } catch {
+          selectedClasses = [];
+        }
+        for (const name of selectedClasses) node.classList.toggle(name, checked);
+        const wrap = node.closest(`[${WRAP_ATTR}]`);
+        if (wrap !== null) {
+          let wrapSelected = [];
+          try {
+            wrapSelected = JSON.parse(wrap.dataset.statusLampWrapSelectedClasses ?? '[]');
+          } catch {
+            wrapSelected = [];
+          }
+          for (const name of wrapSelected) wrap.classList.toggle(name, checked);
+        }
         for (const check of node.querySelectorAll('[class*="_check"]')) {
           const display = checked ? '' : 'none';
           if (check.style.display !== display) check.style.display = display;
@@ -544,6 +561,14 @@ window.__ModuleLoader__.load({
         }
         const row = wrapper === null ? node : node.querySelector('button[role="menuitem"]') ?? node;
         if ('style' in row) row.style.display = '';
+        const selectedClasses = [...anchor.classList].filter((name) => /_selected/.test(name));
+        if (selectedClasses.length > 0) {
+          row.dataset.statusLampSelectedClasses = JSON.stringify(selectedClasses);
+        }
+        if (wrapper !== null) {
+          const wrapSelected = [...wrapper.classList].filter((name) => /_selected/.test(name));
+          if (wrapSelected.length > 0) node.dataset.statusLampWrapSelectedClasses = JSON.stringify(wrapSelected);
+        }
         for (const name of [
           'id',
           'aria-haspopup',
@@ -671,10 +696,11 @@ window.__ModuleLoader__.load({
         if (nativeButtons.length === 0) return;
         for (const button of nativeButtons) button.setAttribute(NATIVE_ATTR, '');
         resetShippedFilter(nativeButtons);
+        const selectedAnchor = nativeButtons.find((button) => /_selected/.test(String(button.className))) ?? nativeButtons[0];
         let anchorNode = siblingOf(section, parent);
         for (const token of SHOW_TOKENS) {
           if (parent.querySelector(`[${ROW_ROLE_ATTR}="${token}"]`) === null) {
-            anchorNode.after(buildRow(nativeButtons[0], parent, token));
+            anchorNode.after(buildRow(selectedAnchor, parent, token));
           }
           const row = parent.querySelector(`[${ROW_ROLE_ATTR}="${token}"]`);
           if (row !== null) anchorNode = siblingOf(row, parent);
