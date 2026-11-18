@@ -193,6 +193,8 @@ assert.equal(defaultClicks, 1, 'a persisted non-default shipped filter must be r
 assert.equal(groupWrapper.style.display, '', 'earlier menu sections must stay visible');
 assert.equal(groupButton.isConnected, true, 'earlier menu buttons must stay in the DOM');
 const rowWrapper = (row) => row.closest('[data-status-lamp-filter-wrap]');
+assert.notEqual(rowWrapper(holdRow).style.display, 'none', 'injected row must be visible');
+assert.notEqual(rowWrapper(archivedRow).style.display, 'none', 'injected row must be visible');
 assert.equal(sectionLabel.nextElementSibling, rowWrapper(holdRow), 'hold row must come first');
 assert.equal(rowWrapper(holdRow).nextElementSibling, rowWrapper(archivedRow), 'archived row must follow the hold row');
 

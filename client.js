@@ -534,6 +534,7 @@ window.__ModuleLoader__.load({
       const buildRow = (anchor, parent, role) => {
         const wrapper = anchor.parentElement !== null && anchor.parentElement !== parent ? anchor.parentElement : null;
         const node = (wrapper ?? anchor).cloneNode(true);
+        if ('style' in node) node.style.display = '';
         for (const element of [node, ...node.querySelectorAll('*')]) {
           if (!element.classList) continue;
           for (const name of [...element.classList]) {
@@ -542,6 +543,7 @@ window.__ModuleLoader__.load({
           if (/_check/i.test(String(element.className))) element.style.display = 'none';
         }
         const row = wrapper === null ? node : node.querySelector('button[role="menuitem"]') ?? node;
+        if ('style' in row) row.style.display = '';
         for (const name of [
           'id',
           'aria-haspopup',
@@ -669,7 +671,6 @@ window.__ModuleLoader__.load({
         if (nativeButtons.length === 0) return;
         for (const button of nativeButtons) button.setAttribute(NATIVE_ATTR, '');
         resetShippedFilter(nativeButtons);
-        hideNativeRows(items);
         let anchorNode = siblingOf(section, parent);
         for (const token of SHOW_TOKENS) {
           if (parent.querySelector(`[${ROW_ROLE_ATTR}="${token}"]`) === null) {
@@ -678,6 +679,7 @@ window.__ModuleLoader__.load({
           const row = parent.querySelector(`[${ROW_ROLE_ATTR}="${token}"]`);
           if (row !== null) anchorNode = siblingOf(row, parent);
         }
+        hideNativeRows(items);
         refreshFilterRows();
         refreshMenuItemState();
       };
